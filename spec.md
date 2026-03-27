@@ -193,6 +193,16 @@ File: `server/api/auth/login.post.ts`
     - safe `user` object (`id`, `email`, `name`, `role`)
   - If the stored password is still plaintext from older data, successful login upgrades it to a bcrypt hash
 
+### 6.1b `/api/me`
+File: `server/api/me.get.ts`
+
+- `GET`
+  - Requires authentication
+  - Returns the current signed-in user:
+    - `id`, `email`, `name`, `role`
+    - `trips` limited to the user's memberships
+  - In developer auth-bypass mode, returns a synthetic developer profile
+
 ---
 
 ### 6.2 `/api/trips`

@@ -63,6 +63,22 @@ paths:
         '401':
           description: Invalid credentials
 
+  /api/me:
+    get:
+      tags: [Users]
+      summary: Return the authenticated user profile
+      responses:
+        '200':
+          description: Current user profile and trip memberships
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '401':
+          description: Missing or invalid bearer token
+        '404':
+          description: Authenticated user no longer exists
+
   /api/users:
     get:
       tags: [Users]
@@ -509,6 +525,39 @@ components:
               type: string
             role:
               type: string
+
+    CurrentUser:
+      type: object
+      required: [id, email, name, role, trips]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+        trips:
+          type: array
+          items:
+            type: object
+            required: [id, name, startDate]
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              startDate:
+                type: string
+                format: date-time
+              endDate:
+                type: string
+                format: date-time
+                nullable: true
 
     Trip:
       type: object
