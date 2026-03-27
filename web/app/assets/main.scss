@@ -38,7 +38,9 @@ body {
 }
 
 .page-wrap {
-  width: min(1120px, calc(100vw - 32px));
+  width: 100%;
+  max-width: 1120px;
+  box-sizing: border-box;
   margin: 0 auto;
 }
 
@@ -101,10 +103,6 @@ body {
 @media (max-width: 959px) {
   .shell-bar {
     min-height: 72px;
-  }
-
-  .page-wrap {
-    width: min(100vw - 24px, 1120px);
   }
 
   .desktop-table-only {
