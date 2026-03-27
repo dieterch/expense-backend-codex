@@ -22,7 +22,6 @@ function buildLoginRoute(reason: string, redirect?: string) {
 }
 
 export function useAuth() {
-  const api = useApi();
   const sessionState = useSessionState();
   const token = sessionState.token;
   const user = sessionState.user as Ref<AuthUser | null>;
@@ -61,8 +60,18 @@ export function useAuth() {
     await navigateTo(buildLoginRoute(reason, redirect));
   }
 
-  async function fetchMe() {
-    const me = await api.get<AuthUser>("/me");
+  async function fetchMe(options: { silentAuthError?: boolean } = {}) {
+    const config = useRuntimeConfig();
+    const me = await $fetch<AuthUser>(`${config.public.apiBase}/me`, {
+      headers: token.value ? { Authorization: `Bearer ${token.value}` } : undefined,
+    }).catch(async (error: any) => {
+      if (options.silentAuthError && (error?.statusCode === 401 || error?.status === 401)) {
+        throw error;
+      }
+
+      throw error;
+    });
+
     user.value = me;
     return me;
   }
@@ -80,7 +89,7 @@ export function useAuth() {
 
       if (token.value) {
         try {
-          await fetchMe();
+          await fetchMe({ silentAuthError: true });
         } catch {
           resetSession();
         }
