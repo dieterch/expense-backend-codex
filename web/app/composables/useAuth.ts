@@ -1,3 +1,5 @@
+import { resolveApiBase } from "~/utils/api-base";
+
 type AuthUser = {
   id: string;
   email: string;
@@ -23,6 +25,8 @@ function buildLoginRoute(reason: string, redirect?: string) {
 
 export function useAuth() {
   const sessionState = useSessionState();
+  const config = useRuntimeConfig();
+  const apiBase = resolveApiBase(config.public.apiBase);
   const token = sessionState.token;
   const user = sessionState.user as Ref<AuthUser | null>;
   const initialized = sessionState.initialized;
@@ -61,8 +65,7 @@ export function useAuth() {
   }
 
   async function fetchMe(options: { silentAuthError?: boolean } = {}) {
-    const config = useRuntimeConfig();
-    const me = await $fetch<AuthUser>(`${config.public.apiBase}/me`, {
+    const me = await $fetch<AuthUser>(`${apiBase}/me`, {
       headers: token.value ? { Authorization: `Bearer ${token.value}` } : undefined,
     }).catch(async (error: any) => {
       if (options.silentAuthError && (error?.statusCode === 401 || error?.status === 401)) {
@@ -102,8 +105,7 @@ export function useAuth() {
   }
 
   async function login(email: string, password: string) {
-    const config = useRuntimeConfig();
-    const response = await $fetch<LoginResponse>(`${config.public.apiBase}/auth/login`, {
+    const response = await $fetch<LoginResponse>(`${apiBase}/auth/login`, {
       method: "POST",
       body: {
         email,

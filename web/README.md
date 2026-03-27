@@ -16,7 +16,11 @@ Start the frontend:
 npm run dev
 ```
 
-By default the app targets `http://127.0.0.1:5678/api/v1`.
+By default the app targets `http://127.0.0.1:5678/api/v1` on the same machine.
+When you open the frontend from another device on your local network, the app automatically
+rewrites that loopback host to the browser's current hostname so it can reach the backend on port `5678`.
+
+To force a specific backend origin, set `NUXT_PUBLIC_API_BASE`.
 
 ## Tests
 

@@ -1,3 +1,5 @@
+import { resolveApiBase } from "~/utils/api-base";
+
 type ApiOptions<TBody = unknown> = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: TBody;
@@ -7,10 +9,11 @@ type ApiOptions<TBody = unknown> = {
 export function useApi() {
   const config = useRuntimeConfig();
   const sessionState = useSessionState();
+  const apiBase = resolveApiBase(config.public.apiBase);
 
   async function request<TResponse, TBody = unknown>(path: string, options: ApiOptions<TBody> = {}) {
     try {
-      return await $fetch<TResponse>(`${config.public.apiBase}${path}`, {
+      return await $fetch<TResponse>(`${apiBase}${path}`, {
         method: options.method,
         body: options.body,
         headers: {
