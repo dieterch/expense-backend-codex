@@ -59,9 +59,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '400':
-          description: Missing email or password
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Invalid credentials
+          $ref: '#/components/responses/Unauthorized'
 
   /api/me:
     get:
@@ -75,14 +75,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/CurrentUser'
         '401':
-          description: Missing or invalid bearer token
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Authenticated user no longer exists
+          $ref: '#/components/responses/NotFound'
 
   /api/users:
     get:
       tags: [Users]
       summary: List users
+      description: Requires admin privileges.
       responses:
         '200':
           description: Users list
@@ -92,9 +93,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       tags: [Users]
       summary: Create user
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -108,9 +114,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
     put:
       tags: [Users]
       summary: Update user
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -124,9 +139,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       tags: [Users]
       summary: Delete user
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -141,11 +167,20 @@ paths:
       responses:
         '200':
           description: User deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/trips:
     get:
       tags: [Trips]
       summary: List trips
+      description: Returns member trips for regular users and all trips for admins.
       responses:
         '200':
           description: Trips list
@@ -155,9 +190,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TripWithUsersAndExpenses'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     post:
       tags: [Trips]
       summary: Create trip
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -171,9 +209,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Trip'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
     put:
       tags: [Trips]
       summary: Update trip and its user assignments
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -187,9 +234,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Trip'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       tags: [Trips]
       summary: Delete trip
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -204,11 +262,20 @@ paths:
       responses:
         '200':
           description: Trip deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/expenses:
     get:
       tags: [Expenses]
       summary: List expenses
+      description: Returns trip-scoped expenses for regular users and all expenses for admins.
       responses:
         '200':
           description: Expenses list
@@ -218,9 +285,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ExpenseWithRelations'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     post:
       tags: [Expenses]
       summary: Create expense
+      description: Requires trip membership. Regular users may only create expenses for themselves.
       requestBody:
         required: true
         content:
@@ -234,9 +304,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Expense'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     put:
       tags: [Expenses]
       summary: Update expense
+      description: Regular users may only update their own expenses within their trips.
       requestBody:
         required: true
         content:
@@ -250,9 +331,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Expense'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       tags: [Expenses]
       summary: Delete expense
+      description: Regular users may only delete their own expenses within their trips.
       requestBody:
         required: true
         content:
@@ -267,11 +359,20 @@ paths:
       responses:
         '200':
           description: Expense deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/tripexpenses:
     post:
       tags: [Trip Queries]
       summary: List expenses for a specific trip
+      description: Requires trip membership or admin privileges.
       requestBody:
         required: true
         content:
@@ -287,11 +388,18 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ExpenseWithRelations'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/tripusers:
     post:
       tags: [Trip Queries]
       summary: List users assigned to a specific trip
+      description: Requires trip membership or admin privileges.
       requestBody:
         required: true
         content:
@@ -307,6 +415,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/TripUserSelection'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/categories:
     get:
@@ -321,9 +435,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CategoryWithExpenses'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     post:
       tags: [Categories]
       summary: Create category
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -337,9 +454,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
     put:
       tags: [Categories]
       summary: Update category
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -353,9 +479,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       tags: [Categories]
       summary: Delete category
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -370,6 +507,14 @@ paths:
       responses:
         '200':
           description: Category deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /api/currency:
     get:
@@ -384,9 +529,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Currency'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
     post:
       tags: [Currency]
       summary: Create currency
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -400,9 +548,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Currency'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
     put:
       tags: [Currency]
       summary: Update currency
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -416,9 +573,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Currency'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
     delete:
       tags: [Currency]
       summary: Delete currency
+      description: Requires admin privileges.
       requestBody:
         required: true
         content:
@@ -432,6 +600,14 @@ paths:
       responses:
         '200':
           description: Currency deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   securitySchemes:
@@ -440,7 +616,49 @@ components:
       scheme: bearer
       bearerFormat: JWT
 
+  responses:
+    BadRequest:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Missing or invalid authentication credentials.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated caller is not allowed to perform this action.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Requested record was not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Request conflicts with an existing record or unique constraint.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        statusMessage:
+          type: string
+        message:
+          type: string
+
     User:
       type: object
       properties:
