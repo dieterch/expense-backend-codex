@@ -20,18 +20,5 @@ const summary = computed(() => buildExpenseReferenceSummary(props));
 </script>
 
 <template>
-  <template v-if="summary">
-    <div class="text-caption text-medium-emphasis">{{ summary.headline }}</div>
-    <div v-if="summary.detail" class="text-caption text-medium-emphasis">{{ summary.detail }}</div>
-    <div
-      v-if="typeof estimatedTotalEurAmount === 'number' && typeof estimatedBankMarkupBps === 'number'"
-      class="text-caption text-medium-emphasis"
-    >
-      Estimated EUR {{ estimatedTotalEurAmount.toFixed(2) }}
-      · markup {{ (estimatedBankMarkupBps / 100).toFixed(2) }}%
-      <template v-if="typeof estimatedFixedFeeCents === 'number' && estimatedFixedFeeCents > 0">
-        · fee EUR {{ (estimatedFixedFeeCents / 100).toFixed(2) }}
-      </template>
-    </div>
-  </template>
+  <div v-if="summary" class="text-caption text-medium-emphasis">{{ summary.headline }}</div>
 </template>

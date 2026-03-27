@@ -21,9 +21,9 @@ describe("expense reference summary", () => {
     });
 
     expect(wrapper.text()).toContain("Frankfurter exchange rate (USD 0.9100 EUR)");
-    expect(wrapper.text()).toContain("Estimated EUR 9.58");
-    expect(wrapper.text()).toContain("markup 2.50%");
-    expect(wrapper.text()).toContain("fee EUR 0.25");
+    expect(wrapper.text()).not.toContain("Estimated EUR");
+    expect(wrapper.text()).not.toContain("markup");
+    expect(wrapper.text()).not.toContain("fee EUR");
   });
 
   it("renders nothing for EUR expenses", async () => {
@@ -52,6 +52,6 @@ describe("expense reference summary", () => {
     });
 
     expect(wrapper.text()).toContain("Configured manual exchange rate (GBP 1.1700 EUR)");
-    expect(wrapper.text()).toContain("Estimated EUR 160.22");
+    expect(wrapper.text()).not.toContain("Estimated EUR");
   });
 });

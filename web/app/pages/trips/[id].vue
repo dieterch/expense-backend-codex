@@ -528,7 +528,6 @@ onMounted(loadTrip);
                   <td>{{ expense.location }}</td>
                   <td class="text-right">
                     <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
-                    <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
                   </td>
                   <td class="text-right">
                     <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
@@ -542,9 +541,6 @@ onMounted(loadTrip);
                       :manual-reference-eur-amount="expense.manualReferenceEurAmount"
                       :manual-rate="expense.manualRate"
                       :manual-rate-provider="expense.manualRateProvider"
-                      :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
-                      :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
-                      :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
                     />
                   </td>
                   <td class="text-right">
@@ -610,8 +606,8 @@ onMounted(loadTrip);
                   </div>
                 </div>
                 <div>
-                  <div class="text-caption text-medium-emphasis">Minor units</div>
-                  <div>{{ expense.amountCents }} cents</div>
+                  <div class="text-caption text-medium-emphasis">EUR view</div>
+                  <div>EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
                 </div>
               </div>
 
@@ -625,9 +621,6 @@ onMounted(loadTrip);
                 :manual-reference-eur-amount="expense.manualReferenceEurAmount"
                 :manual-rate="expense.manualRate"
                 :manual-rate-provider="expense.manualRateProvider"
-                :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
-                :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
-                :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
               />
 
               <div class="d-flex flex-wrap ga-2 mt-4">

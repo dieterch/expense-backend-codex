@@ -51,7 +51,7 @@ export function buildExpenseReferenceSummary(expense: ExpenseReferenceLike) {
     !expense.referenceRateDate
   ) {
     return {
-      headline: "Reference exchange rate unavailable",
+      headline: "No exchange rate",
       detail: "",
     };
   }
