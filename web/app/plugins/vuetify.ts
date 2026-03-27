@@ -1,6 +1,7 @@
 import "@mdi/font/css/materialdesignicons.css";
 import { createVuetify } from "vuetify";
 import { aliases, mdi } from "vuetify/iconsets/mdi";
+import { APP_THEMES, DEFAULT_THEME_NAME } from "~/utils/themes";
 
 export default defineNuxtPlugin((nuxtApp) => {
   const vuetify = createVuetify({
@@ -12,21 +13,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       },
     },
     theme: {
-      defaultTheme: "expense",
-      themes: {
-        expense: {
-          dark: false,
-          colors: {
-            primary: "#17313e",
-            secondary: "#d95f43",
-            accent: "#dfa94d",
-            surface: "#fffaf2",
-            background: "#f5efe4",
-            success: "#356f48",
-            error: "#b63c2f",
-          },
-        },
-      },
+      defaultTheme: DEFAULT_THEME_NAME,
+      themes: APP_THEMES,
     },
     defaults: {
       VCard: {

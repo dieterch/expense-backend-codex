@@ -10,19 +10,48 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(217, 95, 67, 0.18), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(23, 49, 62, 0.16), transparent 30%),
-    linear-gradient(180deg, #f8f3ea 0%, #f2ece0 100%);
+  background: #f5efe4;
   font-family: "Avenir Next", "Segoe UI", sans-serif;
 }
 
 .app-shell {
   min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(217, 95, 67, 0.18), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(23, 49, 62, 0.16), transparent 30%),
+    linear-gradient(180deg, #f8f3ea 0%, #f2ece0 100%);
 }
 
 .grain-overlay {
   position: relative;
+}
+
+.app-shell.v-theme--tide {
+  background:
+    radial-gradient(circle at top left, rgba(44, 140, 153, 0.22), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(15, 61, 76, 0.18), transparent 28%),
+    linear-gradient(180deg, #eef9f8 0%, #dcecef 100%);
+}
+
+.app-shell.v-theme--grove {
+  background:
+    radial-gradient(circle at top left, rgba(93, 140, 99, 0.2), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(36, 64, 50, 0.18), transparent 28%),
+    linear-gradient(180deg, #f3f5ea 0%, #e1e9d9 100%);
+}
+
+.app-shell.v-theme--dusk {
+  background:
+    radial-gradient(circle at top left, rgba(91, 110, 225, 0.24), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(242, 143, 107, 0.16), transparent 26%),
+    linear-gradient(180deg, #1a1f31 0%, #111523 100%);
+}
+
+.app-shell.v-theme--paper {
+  background:
+    radial-gradient(circle at top left, rgba(211, 163, 74, 0.18), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(177, 92, 59, 0.16), transparent 28%),
+    linear-gradient(180deg, #fbf7ef 0%, #ece1cf 100%);
 }
 
 .grain-overlay::before {
@@ -67,6 +96,11 @@ body {
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.theme-select {
+  width: 160px;
+  min-width: 160px;
 }
 
 .table-shell {
@@ -121,5 +155,10 @@ body {
 
   .shell-bar-actions {
     gap: 8px;
+  }
+
+  .theme-select {
+    width: 100%;
+    min-width: 0;
   }
 }

@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { useDisplay } from "vuetify";
+import { useDisplay, useTheme } from "vuetify";
+import { THEME_OPTIONS, type ThemeName } from "~/utils/themes";
 
 const route = useRoute();
 const auth = useAuth();
 const selectedTripState = useSelectedTrip();
+const themePreferences = useThemePreferences();
+const theme = useTheme();
 const display = useDisplay();
 const drawerOpen = ref(false);
 
 selectedTripState.init();
+themePreferences.init();
 
 const showShell = computed(() => route.path !== "/login");
 const isMobile = computed(() => display.mdAndDown.value);
+const themeOptions = THEME_OPTIONS;
+const selectedTheme = computed({
+  get: () => themePreferences.selectedTheme.value,
+  set: (value: ThemeName) => themePreferences.setTheme(value),
+});
 const navigationItems = computed(() => {
   const items = [
     { title: "Trips", to: "/trips" },
@@ -31,6 +40,14 @@ const navigationItems = computed(() => {
 watch(() => route.path, () => {
   drawerOpen.value = false;
 });
+
+watch(
+  () => themePreferences.selectedTheme.value,
+  (nextTheme) => {
+    theme.global.name.value = nextTheme;
+  },
+  { immediate: true },
+);
 </script>
 
 <template>
@@ -87,6 +104,20 @@ watch(() => route.path, () => {
             </nav>
           </div>
           <div class="shell-bar-actions">
+            <v-select
+              v-model="selectedTheme"
+              :items="themeOptions"
+              item-title="title"
+              item-value="value"
+              label="Theme"
+              color="accent"
+              variant="solo-filled"
+              density="compact"
+              hide-details
+              flat
+              bg-color="white"
+              class="theme-select"
+            />
             <v-chip
               v-if="selectedTripState.selectedTrip.value"
               color="white"
@@ -123,6 +154,16 @@ watch(() => route.path, () => {
         <div class="pa-4">
           <div class="text-overline text-secondary page-title font-weight-bold mb-1">Navigate</div>
           <div class="text-h6 mb-4">Expense Web</div>
+          <v-select
+            v-model="selectedTheme"
+            :items="themeOptions"
+            item-title="title"
+            item-value="value"
+            label="Theme"
+            color="secondary"
+            class="mb-4"
+            hide-details
+          />
           <div class="d-flex flex-column ga-2">
             <v-btn
               v-for="item in navigationItems"
