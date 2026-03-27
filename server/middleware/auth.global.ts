@@ -1,7 +1,7 @@
 import { H3Event, sendError } from 'h3';
 import { jwtVerify } from 'jose';
 
-const publicPaths = new Set(["/docs", "/openapi.yaml", "/api/auth/login"]);
+const publicPaths = new Set(["/docs", "/openapi.yaml", "/api/auth/login", "/api/v1/auth/login"]);
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',

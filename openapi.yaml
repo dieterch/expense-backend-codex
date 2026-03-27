@@ -8,6 +8,7 @@ info:
     Notes:
     - Authentication is handled by Bearer JWT middleware.
     - Local development can bypass bearer auth by setting `NITRO_DEV_AUTH_BYPASS=true`.
+    - Versioned aliases are available under `/api/v1/*` and currently mirror the `/api/*` routes.
     - Some endpoints use POST for filtered reads (e.g. /api/tripexpenses, /api/tripusers).
 servers:
   - url: http://localhost:5678

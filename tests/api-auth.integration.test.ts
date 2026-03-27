@@ -260,6 +260,41 @@ test("api/me rejects requests without a bearer token", async () => {
   assert.equal(response.status, 401);
 });
 
+test("versioned api aliases work for login and authenticated reads", async () => {
+  const loginResponse = await fetch(`${baseUrl}/api/v1/auth/login`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const meResponse = await fetch(`${baseUrl}/api/v1/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  assert.equal(meResponse.status, 200);
+  const mePayload = await meResponse.json();
+  assert.equal(mePayload.email, "member@example.com");
+
+  const tripsResponse = await fetch(`${baseUrl}/api/v1/trips`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  assert.equal(tripsResponse.status, 200);
+  const trips = await tripsResponse.json();
+  assert.equal(trips.length, 1);
+  assert.equal(trips[0].name, "Integration Trip");
+});
+
 test("regular users only see their own trips while admins see all trips", async () => {
   const memberLogin = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

@@ -154,6 +154,7 @@ Behavior:
 ## 6) API Endpoints
 
 Base path uses Nitro file routing under `server/api`, so endpoints are available under `/api/*`.
+Versioned aliases are also available under `/api/v1/*` and currently mirror the same handlers.
 
 ---
 
