@@ -103,7 +103,7 @@ watch(
               </v-btn>
             </nav>
           </div>
-          <div class="shell-bar-actions">
+          <div v-if="!isMobile" class="shell-bar-actions">
             <v-select
               v-model="selectedTheme"
               :items="themeOptions"
@@ -154,6 +154,26 @@ watch(
         <div class="pa-4">
           <div class="text-overline text-secondary page-title font-weight-bold mb-1">Navigate</div>
           <div class="text-h6 mb-4">Expense Web</div>
+          <v-chip
+            v-if="selectedTripState.selectedTrip.value"
+            color="accent"
+            variant="tonal"
+            class="mb-4"
+            :to="`/trips/${selectedTripState.selectedTrip.value.id}`"
+          >
+            {{ selectedTripState.selectedTrip.value.name }}
+          </v-chip>
+          <v-chip
+            v-if="auth.user.value"
+            color="primary"
+            variant="tonal"
+            class="mb-4 ml-2"
+          >
+            {{ auth.user.value.name }}
+            <template v-if="auth.isAdmin.value">
+              · admin
+            </template>
+          </v-chip>
           <v-select
             v-model="selectedTheme"
             :items="themeOptions"
