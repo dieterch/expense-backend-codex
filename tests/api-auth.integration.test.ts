@@ -111,6 +111,15 @@ before(async () => {
     },
   });
 
+  const adminUser = await prisma.user.create({
+    data: {
+      email: "admin@example.com",
+      name: "Admin User",
+      password: "admin-password",
+      role: "admin",
+    },
+  });
+
   const trip = await prisma.trip.create({
     data: {
       name: "Integration Trip",
@@ -151,6 +160,20 @@ before(async () => {
       name: "EUR",
       symbol: "EUR",
       factor: 1,
+    },
+  });
+
+  await prisma.expense.create({
+    data: {
+      amount: 18.5,
+      amountCents: 1850,
+      currency: currency.name,
+      date: new Date("2025-02-02T12:00:00.000Z"),
+      location: "Secret Place",
+      description: "Hidden expense",
+      tripId: hiddenTrip.id,
+      userId: otherUser.id,
+      categoryId: category.id,
     },
   });
 
@@ -237,6 +260,45 @@ test("api/me rejects requests without a bearer token", async () => {
   assert.equal(response.status, 401);
 });
 
+test("regular users only see their own trips while admins see all trips", async () => {
+  const memberLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+  assert.equal(memberLogin.status, 200);
+  const { token: memberToken } = await memberLogin.json();
+
+  const adminLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "admin@example.com",
+      password: "admin-password",
+    }),
+  });
+  assert.equal(adminLogin.status, 200);
+  const { token: adminToken } = await adminLogin.json();
+
+  const memberTripsResponse = await fetch(`${baseUrl}/api/trips`, {
+    headers: { Authorization: `Bearer ${memberToken}` },
+  });
+  assert.equal(memberTripsResponse.status, 200);
+  const memberTrips = await memberTripsResponse.json();
+  assert.equal(memberTrips.length, 1);
+  assert.equal(memberTrips[0].name, "Integration Trip");
+
+  const adminTripsResponse = await fetch(`${baseUrl}/api/trips`, {
+    headers: { Authorization: `Bearer ${adminToken}` },
+  });
+  assert.equal(adminTripsResponse.status, 200);
+  const adminTrips = await adminTripsResponse.json();
+  assert.equal(adminTrips.length, 2);
+});
+
 test("cors preflight is handled by middleware", async () => {
   const response = await fetch(`${baseUrl}/api/expenses`, {
     method: "OPTIONS",
@@ -249,6 +311,45 @@ test("cors preflight is handled by middleware", async () => {
   assert.equal(response.status, 204);
   assert.equal(response.headers.get("access-control-allow-origin"), "*");
   assert.equal(response.headers.get("access-control-allow-methods"), "GET, POST, PUT, DELETE, OPTIONS");
+});
+
+test("regular users cannot access another trip's users or expenses", async () => {
+  const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const hiddenTrip = await prisma.trip.findUniqueOrThrow({
+    where: { name: "Hidden Trip" },
+    select: { id: true },
+  });
+
+  const hiddenTripUsersResponse = await fetch(`${baseUrl}/api/tripusers`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id: hiddenTrip.id }),
+  });
+  assert.equal(hiddenTripUsersResponse.status, 403);
+
+  const hiddenTripExpensesResponse = await fetch(`${baseUrl}/api/tripexpenses`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id: hiddenTrip.id }),
+  });
+  assert.equal(hiddenTripExpensesResponse.status, 403);
 });
 
 test("expense writes and reads expose synced amount and amountCents", async () => {
@@ -315,4 +416,122 @@ test("expense writes and reads expose synced amount and amountCents", async () =
   assert.ok(expense);
   assert.equal(expense.amount, 12.34);
   assert.equal(expense.amountCents, 1234);
+});
+
+test("regular users cannot create expenses in trips they do not belong to", async () => {
+  const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const member = await prisma.user.findUniqueOrThrow({
+    where: { email: "member@example.com" },
+    select: { id: true },
+  });
+  const hiddenTrip = await prisma.trip.findUniqueOrThrow({
+    where: { name: "Hidden Trip" },
+    select: { id: true },
+  });
+  const category = await prisma.category.findUniqueOrThrow({
+    where: { name: "Meals" },
+    select: { id: true },
+  });
+
+  const response = await fetch(`${baseUrl}/api/expenses`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: 4.5,
+      currency: "EUR",
+      date: "2025-03-01T12:00:00.000Z",
+      location: "Blocked Trip",
+      description: "Should fail",
+      tripId: hiddenTrip.id,
+      userId: member.id,
+      categoryId: category.id,
+    }),
+  });
+
+  assert.equal(response.status, 403);
+});
+
+test("regular users cannot update another user's expense, but admins can read all expenses", async () => {
+  const memberLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+  assert.equal(memberLogin.status, 200);
+  const { token: memberToken } = await memberLogin.json();
+
+  const adminLogin = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "admin@example.com",
+      password: "admin-password",
+    }),
+  });
+  assert.equal(adminLogin.status, 200);
+  const { token: adminToken } = await adminLogin.json();
+
+  const hiddenExpense = await prisma.expense.findFirstOrThrow({
+    where: { description: "Hidden expense" },
+    select: {
+      id: true,
+      amount: true,
+      currency: true,
+      date: true,
+      location: true,
+      description: true,
+      userId: true,
+      tripId: true,
+      categoryId: true,
+    },
+  });
+
+  const forbiddenUpdate = await fetch(`${baseUrl}/api/expenses`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${memberToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      id: hiddenExpense.id,
+      amount: hiddenExpense.amount,
+      currency: hiddenExpense.currency,
+      date: hiddenExpense.date.toISOString(),
+      location: hiddenExpense.location,
+      description: "Illegal update",
+      userId: hiddenExpense.userId,
+      tripId: hiddenExpense.tripId,
+      categoryId: hiddenExpense.categoryId,
+    }),
+  });
+
+  assert.equal(forbiddenUpdate.status, 403);
+
+  const adminExpensesResponse = await fetch(`${baseUrl}/api/expenses`, {
+    headers: {
+      Authorization: `Bearer ${adminToken}`,
+    },
+  });
+
+  assert.equal(adminExpensesResponse.status, 200);
+  const adminExpenses = await adminExpensesResponse.json();
+  assert.ok(adminExpenses.some((expense: any) => expense.description === "Hidden expense"));
+  assert.ok(adminExpenses.some((expense: any) => expense.description === "Lunch"));
 });
