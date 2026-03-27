@@ -14,7 +14,7 @@ selectedTripState.init();
 themePreferences.init();
 
 const showShell = computed(() => route.path !== "/login");
-const isMobile = computed(() => display.mdAndDown.value);
+const isCompactShell = computed(() => display.lgAndDown.value);
 const themeOptions = THEME_OPTIONS;
 const selectedTheme = computed({
   get: () => themePreferences.selectedTheme.value,
@@ -79,7 +79,7 @@ watch(
         <div class="page-wrap shell-bar w-100">
           <div class="d-flex align-center ga-3">
             <v-btn
-              v-if="isMobile"
+              v-if="isCompactShell"
               icon="mdi-menu"
               color="white"
               variant="text"
@@ -90,7 +90,7 @@ watch(
               <span class="text-caption page-title text-white">Expense Web</span>
               <strong class="text-white">Trips and shared costs</strong>
             </div>
-            <nav v-if="!isMobile" class="d-flex flex-wrap ga-2">
+            <nav v-if="!isCompactShell" class="d-flex flex-wrap ga-2">
               <v-btn
                 v-for="item in navigationItems"
                 :key="item.to"
@@ -103,7 +103,7 @@ watch(
               </v-btn>
             </nav>
           </div>
-          <div v-if="!isMobile" class="shell-bar-actions">
+          <div v-if="!isCompactShell" class="shell-bar-actions">
             <v-select
               v-model="selectedTheme"
               :items="themeOptions"
@@ -145,7 +145,7 @@ watch(
       </v-app-bar>
 
       <v-navigation-drawer
-        v-if="isMobile"
+        v-if="isCompactShell"
         v-model="drawerOpen"
         location="left"
         color="surface"
