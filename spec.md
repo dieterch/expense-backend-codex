@@ -341,6 +341,7 @@ From `package.json`:
 - `npm run build` → `nitro build`
 - `npm run prepare` → `nitro prepare`
 - `npm run preview` → `node .output/server/index.mjs`
+- `npm run db:backup` → create a timestamped backup of the current SQLite database in `backups/`
 
 Prisma seed hook configured:
 - `prisma.seed = "node prisma/seed.js"` (seed file not present in current tree)

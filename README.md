@@ -15,3 +15,13 @@ NITRO_DEV_AUTH_BYPASS=true
 When enabled, the global auth middleware skips JWT validation and injects a synthetic user payload into `event.context.user`.
 
 Leave `NITRO_DEV_AUTH_BYPASS=false` in normal or production-like environments.
+
+## SQLite safety
+
+Before changing the Prisma schema or running migrations, create a SQLite backup:
+
+```bash
+npm run db:backup
+```
+
+Backups are written to `backups/` and are gitignored.

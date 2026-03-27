@@ -1,9 +1,2 @@
+backups/
 node_modules
-bak
-dist
-.data
-.nitro
-.cache
-.output
-.env
-dev.db
