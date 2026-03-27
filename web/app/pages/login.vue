@@ -4,10 +4,29 @@ definePageMeta({
 });
 
 const auth = useAuth();
+const route = useRoute();
 const email = ref("dev-member@example.com");
 const password = ref("dev-member-password");
 const loading = ref(false);
 const errorMessage = ref("");
+
+const infoMessage = computed(() => {
+  const reason = route.query.reason;
+
+  if (reason === "auth-required") {
+    return "Sign in to continue to the page you requested.";
+  }
+
+  if (reason === "session-expired") {
+    return "Your session expired. Please sign in again.";
+  }
+
+  if (reason === "logged-out") {
+    return "You have been signed out.";
+  }
+
+  return "";
+});
 
 async function submit() {
   loading.value = true;
@@ -15,7 +34,8 @@ async function submit() {
 
   try {
     await auth.login(email.value, password.value);
-    await navigateTo("/trips");
+    const redirectTarget = typeof route.query.redirect === "string" ? route.query.redirect : "/trips";
+    await navigateTo(redirectTarget);
   } catch (error: any) {
     errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Login failed";
   } finally {
@@ -50,6 +70,14 @@ async function submit() {
               <v-col cols="12" md="6">
                 <v-card variant="outlined" class="pa-4 pa-md-6">
                   <div class="text-h5 mb-4">Sign in</div>
+                  <v-alert
+                    v-if="infoMessage"
+                    type="info"
+                    variant="tonal"
+                    class="mb-4"
+                  >
+                    {{ infoMessage }}
+                  </v-alert>
                   <v-alert
                     v-if="errorMessage"
                     type="error"

@@ -5,4 +5,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!auth.isAuthenticated.value) {
     return auth.redirectToLogin("auth-required", to.fullPath);
   }
+
+  if (!auth.isAdmin.value) {
+    return navigateTo("/forbidden");
+  }
 });

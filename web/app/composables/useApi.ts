@@ -6,8 +6,7 @@ type ApiOptions<TBody = unknown> = {
 
 export function useApi() {
   const config = useRuntimeConfig();
-  const token = useState<string | null>("auth_token", () => null);
-  const user = useState<Record<string, unknown> | null>("auth_user", () => null);
+  const sessionState = useSessionState();
 
   async function request<TResponse, TBody = unknown>(path: string, options: ApiOptions<TBody> = {}) {
     try {
@@ -16,14 +15,24 @@ export function useApi() {
         body: options.body,
         headers: {
           ...(options.headers || {}),
-          ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
+          ...(sessionState.token.value ? { Authorization: `Bearer ${sessionState.token.value}` } : {}),
         },
       });
     } catch (error: any) {
       if (error?.statusCode === 401 && process.client) {
-        token.value = null;
-        user.value = null;
-        localStorage.removeItem("expense-web-token");
+        sessionState.token.value = null;
+        sessionState.user.value = null;
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(SELECTED_TRIP_KEY);
+
+        if (window.location.pathname !== "/login") {
+          await navigateTo({
+            path: "/login",
+            query: {
+              reason: "session-expired",
+            },
+          });
+        }
       }
 
       throw error;

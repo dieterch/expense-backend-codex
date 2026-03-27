@@ -11,14 +11,23 @@ type LoginResponse = {
   user: AuthUser;
 };
 
-const STORAGE_KEY = "expense-web-token";
+function buildLoginRoute(reason: string, redirect?: string) {
+  return {
+    path: "/login",
+    query: {
+      reason,
+      ...(redirect ? { redirect } : {}),
+    },
+  };
+}
 
 export function useAuth() {
   const api = useApi();
-  const token = useState<string | null>("auth_token", () => null);
-  const user = useState<AuthUser | null>("auth_user", () => null);
-  const initialized = useState<boolean>("auth_initialized", () => false);
-  const pending = useState<boolean>("auth_pending", () => false);
+  const sessionState = useSessionState();
+  const token = sessionState.token;
+  const user = sessionState.user as Ref<AuthUser | null>;
+  const initialized = sessionState.initialized;
+  const pending = sessionState.pending;
 
   const isAuthenticated = computed(() => Boolean(token.value));
   const isAdmin = computed(() => user.value?.role === "admin");
@@ -38,6 +47,18 @@ export function useAuth() {
   function resetSession() {
     setToken(null);
     user.value = null;
+
+    if (process.client) {
+      localStorage.removeItem(SELECTED_TRIP_KEY);
+    }
+  }
+
+  async function redirectToLogin(reason: string, redirect?: string) {
+    if (process.client && window.location.pathname === "/login") {
+      return;
+    }
+
+    await navigateTo(buildLoginRoute(reason, redirect));
   }
 
   async function fetchMe() {
@@ -90,7 +111,7 @@ export function useAuth() {
 
   async function logout() {
     resetSession();
-    await navigateTo("/login");
+    await redirectToLogin("logged-out");
   }
 
   return {
@@ -104,5 +125,6 @@ export function useAuth() {
     login,
     fetchMe,
     logout,
+    redirectToLogin,
   };
 }
