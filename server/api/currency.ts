@@ -1,17 +1,10 @@
-import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireAdminUser, requireAuthenticatedUser } from "../../utils/access-control";
 import { normalizeRouteError } from "../../utils/route-error";
 import { ensureObjectBody, requireNumber, requireString } from "../../utils/request-validation";
 
 export default defineEventHandler(async (event) => {
-  await doPreChecks(event, "currency.ts");
   try {
-    if (event.node.req.method === "OPTIONS") {
-      console.log("OPTIONS call detected, will not forward this to Database.");
-      return;
-    }
-
     requireAuthenticatedUser(event);
 
     if (event.node.req.method === "GET") {

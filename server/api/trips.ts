@@ -1,5 +1,4 @@
 // server/api/trips.ts
-import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireAdminUser, requireAuthenticatedUser, tripReadWhereForUser } from "../../utils/access-control";
 import { normalizeRouteError } from "../../utils/route-error";
@@ -13,13 +12,7 @@ import {
 } from "../../utils/request-validation";
 
 export default defineEventHandler(async (event) => {
-  await doPreChecks(event, "trips.ts");
   try {
-    if (event.node.req.method === "OPTIONS") {
-      console.log("OPTIONS call detected, will not forward this to Database.");
-      return;
-    }
-
     const user = requireAuthenticatedUser(event);
 
     if (event.node.req.method === "GET") {

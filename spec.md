@@ -39,8 +39,7 @@ It also provides a login endpoint that returns JWTs for identified users.
 │   └── routes/
 │       └── index.ts
 ├── utils/
-│   ├── jwt.ts
-│   └── precheck.ts
+│   └── jwt.ts
 └── help/
     └── ct.mjs
 ```
@@ -148,13 +147,7 @@ Behavior:
   - missing/invalid header → `401 Unauthorized`
   - failed verification → `403 Forbidden`
 
-## Endpoint precheck helper
-File: `utils/precheck.ts`
-
-- Calls `handleCors(...)` with wildcard origin and broad method list.
-- Contains commented-out cookie/JWT auth flow (currently inactive).
-
-> Current codebase uses both global auth middleware and per-endpoint precheck CORS handling.
+> CORS and auth are centralized in global middleware.
 
 ---
 
@@ -354,8 +347,8 @@ Prisma seed hook configured:
 
 1. Several catch blocks build strings but do not return/throw structured errors.
 2. Users endpoint currently exposes `password` field on list reads.
-3. Some endpoint logging labels are inconsistent (e.g., precheck tag uses `users.ts` in non-user files).
-4. Mixed CORS/auth strategy between global middleware and precheck helper.
+3. Some endpoint logging labels are inconsistent.
+4. Error responses are more consistent now, but OpenAPI does not yet describe all `4xx/5xx` variants in detail.
 5. README is still default Nitro starter content.
 
 ---
@@ -364,7 +357,7 @@ Prisma seed hook configured:
 
 1. Remove `password` from all API responses.
 2. Standardize error handling (`createError` with status codes).
-3. Centralize CORS and auth in middleware only.
+3. Keep CORS and auth centralized in middleware only.
 4. Add DTO/request validation (e.g., Zod) per endpoint.
 5. Add pagination/filtering for list endpoints.
 6. Add project-specific README setup + env documentation.

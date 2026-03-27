@@ -1,5 +1,4 @@
 // server/api/tripexpenses.ts
-import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireTripAccess } from "../../utils/access-control";
 import { normalizeRouteError } from "../../utils/route-error";
@@ -7,14 +6,7 @@ import { ensureObjectBody, requireUuidLikeId } from "../../utils/request-validat
 import { normalizeExpenseMoney } from "../../utils/money";
 
 export default defineEventHandler(async (event) => {
-  await doPreChecks(event, "users.ts");
   try {
-
-    if (event.node.req.method === "OPTIONS") {
-      console.log("OPTIONS call detected, will not forward this to Database.");
-      return;
-    }
-
     const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody
     console.log(
       "tripexpenses.ts, body:",

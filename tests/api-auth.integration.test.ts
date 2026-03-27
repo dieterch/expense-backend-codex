@@ -237,6 +237,20 @@ test("api/me rejects requests without a bearer token", async () => {
   assert.equal(response.status, 401);
 });
 
+test("cors preflight is handled by middleware", async () => {
+  const response = await fetch(`${baseUrl}/api/expenses`, {
+    method: "OPTIONS",
+    headers: {
+      Origin: "http://localhost:3000",
+      "Access-Control-Request-Method": "POST",
+    },
+  });
+
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get("access-control-allow-origin"), "*");
+  assert.equal(response.headers.get("access-control-allow-methods"), "GET, POST, PUT, DELETE, OPTIONS");
+});
+
 test("expense writes and reads expose synced amount and amountCents", async () => {
   const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",

@@ -1,8 +1,13 @@
-// server/middleware/auth.ts
 import { H3Event, sendError } from 'h3';
 import { jwtVerify } from 'jose';
 
 const publicPaths = new Set(["/docs", "/openapi.yaml", "/api/auth/login"]);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Allow-Credentials': 'true',
+};
 
 function isTruthyRuntimeFlag(value: unknown) {
   if (typeof value === "boolean") {
@@ -17,16 +22,11 @@ function isTruthyRuntimeFlag(value: unknown) {
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  if (event.node.req.method === "OPTIONS") {
-    setResponseHeaders(event, {
-      //'Access-Control-Allow-Origin': 'http://192.168.15.64:9000',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-      'Access-Control-Allow-Credentials': 'true',
-    });
+  setResponseHeaders(event, corsHeaders);
 
-    return null; // Respond with no content
+  if (event.node.req.method === "OPTIONS") {
+    event.node.res.statusCode = 204;
+    return "";
   }
 
   if (publicPaths.has(getRequestURL(event).pathname)) {

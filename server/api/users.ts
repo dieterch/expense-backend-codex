@@ -1,5 +1,4 @@
 // server/api/users.ts
-import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireAdminUser } from "../../utils/access-control";
 import { hashPassword } from "../../utils/password";
@@ -7,13 +6,7 @@ import { normalizeRouteError } from "../../utils/route-error";
 import { ensureObjectBody, optionalString, requireString, requireUuidLikeId } from "../../utils/request-validation";
 
 export default defineEventHandler(async (event) => {
-  await doPreChecks(event, "users.ts");
   try {
-    if (event.node.req.method === "OPTIONS") {
-      console.log("OPTIONS call detected, will not forward this to Database.");
-      return;
-    }
-
     requireAdminUser(event);
 
     if (event.node.req.method === "GET") {

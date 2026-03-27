@@ -1,5 +1,4 @@
 // server/api/expenses.ts
-import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import {
   expenseReadWhereForUser,
@@ -20,14 +19,8 @@ import {
 import { amountToCents, normalizeExpenseMoney } from "../../utils/money";
 
 export default defineEventHandler(async (event) => {
-  await doPreChecks(event, "users.ts");
   try {
     const user = requireAuthenticatedUser(event);
-
-    if (event.node.req.method === "OPTIONS") {
-      console.log("OPTIONS call detected, will not forward this to Database.");
-      return;
-    }
 
     if (event.node.req.method === "GET") {
       console.log("expenses.ts, method:", event.node.req.method);
