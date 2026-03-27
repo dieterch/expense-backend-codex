@@ -4,6 +4,7 @@
     "build": "nitro build",
     "db:backup": "node scripts/backup-sqlite.mjs",
     "db:backfill:amount-cents": "node scripts/backfill-expense-amount-cents.mjs",
+    "db:seed:dev": "tsx scripts/dev-bootstrap.ts",
     "dev": "nitro dev --host 0.0.0.0 --port 5678",
     "prepare": "nitro prepare",
     "preview": "node .output/server/index.mjs",

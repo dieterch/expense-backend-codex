@@ -52,6 +52,32 @@ The first web flow includes:
 - trip detail
 - expense creation
 
+## Local demo users
+
+To create a local admin login, a member login, and a sample trip without deleting existing data, run:
+
+```bash
+npm run db:seed:dev
+```
+
+Default local credentials:
+
+- admin: `dev-admin@example.com` / `dev-admin-password`
+- member: `dev-member@example.com` / `dev-member-password`
+
+The bootstrap is idempotent:
+
+- it creates or updates only the named demo users
+- it ensures one sample trip and memberships exist
+- it does not wipe existing rows from your SQLite database
+
+You can override the defaults with env vars such as:
+
+- `DEV_BOOTSTRAP_ADMIN_EMAIL`
+- `DEV_BOOTSTRAP_ADMIN_PASSWORD`
+- `DEV_BOOTSTRAP_MEMBER_EMAIL`
+- `DEV_BOOTSTRAP_MEMBER_PASSWORD`
+
 ## SQLite safety
 
 Before changing the Prisma schema or running migrations, create a SQLite backup:
