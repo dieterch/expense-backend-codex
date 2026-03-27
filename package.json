@@ -8,17 +8,15 @@
     "preview": "node .output/server/index.mjs",
     "test": "tsx --test tests/*.test.ts"
   },
-  "prisma": {
-    "seed": "node prisma/seed.js"
-  },
   "devDependencies": {
     "@types/node-jose": "^1.1.13",
+    "dotenv": "^16.6.1",
     "nitropack": "latest",
-    "prisma": "^5.22.0",
+    "prisma": "^6.15.0",
     "tsx": "^4.21.0"
   },
   "dependencies": {
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.15.0",
     "bcrypt": "^5.1.1",
     "jose": "^5.9.6"
   }
