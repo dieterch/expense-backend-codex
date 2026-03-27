@@ -46,6 +46,9 @@ Frontend:
 - Nuxt + Vuetify app in `web/`
 - frontend test infrastructure is set up with Vitest + Playwright
 - auth/session restore, route guards, admin guards, forbidden page, logout handling all exist
+- frontend dev host is exposed for LAN access
+- API base resolution is LAN-aware:
+  - if the configured API base points at `localhost` or `127.0.0.1`, remote devices use the current browser hostname with backend port `5678`
 - trip flows are implemented:
   - trip list
   - trip detail
@@ -62,6 +65,10 @@ Frontend:
   - XLSX export
 - FX support is implemented in trip UI:
   - foreign-currency expenses show reference EUR conversion
+  - when historical reference FX is missing, the UI falls back to the configured manual exchange rate
+  - the EUR view was simplified to the minimum:
+    - no `xxxx cents` display under expense amounts
+    - only the EUR amount plus a short exchange-rate source line remain
 - configurable bank-cost estimation is implemented:
   - local persisted settings in browser
   - default markup
@@ -71,9 +78,19 @@ Frontend:
   - estimated EUR total shown beside reference EUR
 - estimator calibration from `ausgaben.xlsx` is implemented and documented
 - category icons are rendered in trip/admin views
+- MDI font icons are loaded and legacy icon names are normalized for display
+- five selectable frontend themes are implemented and persisted:
+  - Atlas
+  - Tide
+  - Grove
+  - Dusk
+  - Paper
 - responsive/mobile improvements are implemented:
   - mobile shell navigation drawer
   - responsive expense/report card layouts beside table layouts
+  - tablet/iPad app bar now uses the drawer-based shell to avoid wrapped/clipped controls
+  - wide-screen container sizing was fixed to avoid asymmetric left/right margins and clipped content
+  - login form width was increased on larger screens
 - frontend startup redirect/session restore has been stabilized:
   - root `/` now redirects via dedicated route middleware
   - session restore no longer uses the auto-redirecting API helper during bootstrap
@@ -96,18 +113,30 @@ Important files for current state:
 - `prisma/migrations/20260327153000_add_expense_reference_exchange/migration.sql`
 - `server/routes/docs.ts`
 - `server/routes/openapi.yaml.ts`
+- `web/.nuxtrc`
+- `web/app/assets/main.scss`
+- `web/app/layouts/default.vue`
 - `web/app/pages/index.vue`
 - `web/app/middleware/root-redirect.ts`
+- `web/app/pages/login.vue`
 - `web/app/pages/trips/[id].vue`
 - `web/app/pages/trips/index.vue`
+- `web/app/pages/admin/expenses.vue`
 - `web/app/components/admin/TripEditorDialog.vue`
 - `web/app/components/shared/CategoryIcon.vue`
 - `web/app/components/trip/ExpenseReferenceSummary.vue`
 - `web/app/components/trip/EstimationSettingsDialog.vue`
+- `web/app/composables/useApi.ts`
 - `web/app/composables/useAuth.ts`
 - `web/app/composables/useEstimationSettings.ts`
+- `web/app/composables/useThemePreferences.ts`
+- `web/app/plugins/vuetify.ts`
+- `web/app/utils/api-base.ts`
+- `web/app/utils/category-icon.ts`
 - `web/app/utils/expense-estimation.ts`
 - `web/app/utils/expense-estimation-calibration.ts`
+- `web/app/utils/expense-reference.ts`
+- `web/app/utils/themes.ts`
 - `web/estimation-calibration.md`
 
 Testing status:
@@ -121,18 +150,18 @@ Important workflow note:
 - parallel runs can collide on Nuxt generated artifacts and produce false failures
 
 Recent meaningful commits:
-- `1f24376` Stabilize frontend startup redirects
-- `9ed18da` Fix initial root-page redirect
-- `41e43b1` Gate docs routes behind env toggle
-- `013d9c8` Add trip admin UI and responsive expense views
-- `9bbc0ac` Add frontend test infrastructure
-- `993179e` Finalize frontend session auth foundation
-- `906e18a` Complete trip expense user flows
-- `cd2878f` Add admin resource management screens
-- `c49d9d3` Add admin expense reporting and export
-- `04f2c3e` Add historical FX reference support
-- `40a7361` Add configurable FX cost estimation
-- `9a2dde6` Calibrate FX estimator from workbook
+- `7a201fc` Simplify the trip expense EUR view
+- `aac4762` Use drawer navigation for tablet-width app bars
+- `c175cd6` Simplify the app bar on tablet layouts
+- `f527cad` Add five selectable frontend themes
+- `bd3252f` Make frontend API base work on LAN devices
+- `a0628ee` Widen the login form layout
+- `f070a92` Fix wide-screen page wrap sizing
+- `2638900` Expose the frontend dev host
+- `bd5de1a` Fix trip expense responsiveness and trim FX copy
+- `d5581e5` Track Nuxt test utils config
+- `c6df91e` Load MDI font icons in the web app
+- `687c6d9` Add manual FX fallback and normalize category icons
 
 Local/dev notes:
 - Local dev bootstrap exists:
@@ -143,6 +172,9 @@ Local/dev notes:
 - docs/UI API docs are disabled unless `.env` contains:
   - `NITRO_DOCS_ENABLED=true`
 - if frontend behavior looks stale or blank while using VS Code localhost forwarding, restart both frontend/backend dev servers and hard refresh the browser once before debugging further
+- for LAN testing on devices like iPad:
+  - frontend should be opened via your machine's LAN IP, not `localhost`
+  - backend also needs to be running on `0.0.0.0:5678`
 
 Important working conventions:
 
@@ -161,6 +193,7 @@ Status:
 - steps 9 and 10 have partial/meaningful implementation:
   - historical FX reference support is implemented
   - configurable bank-cost estimation is implemented
+  - manual FX fallback is implemented in the UI when historical reference data is missing
   - actual booked EUR reconciliation/prediction-error follow-up is still an open next frontier
 - repo should be clean before starting new work
 
