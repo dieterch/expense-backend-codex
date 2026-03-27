@@ -98,6 +98,7 @@ Source: `prisma/schema.prisma`
 ### `Expense`
 - `id` (uuid, PK)
 - `amount` (Float)
+- `amountCents` (Int, nullable during transition; integer minor units derived from `amount`)
 - `currency` (String FK to `Currency.name`)
 - `date`
 - `location`
@@ -342,6 +343,7 @@ From `package.json`:
 - `npm run prepare` → `nitro prepare`
 - `npm run preview` → `node .output/server/index.mjs`
 - `npm run db:backup` → create a timestamped backup of the current SQLite database in `backups/`
+- `npm run db:backfill:amount-cents` → populate `Expense.amountCents` from existing float `amount` values
 
 Prisma seed hook configured:
 - `prisma.seed = "node prisma/seed.js"` (seed file not present in current tree)

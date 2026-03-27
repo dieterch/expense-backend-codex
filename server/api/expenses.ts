@@ -17,6 +17,7 @@ import {
   requireString,
   requireUuidLikeId,
 } from "../../utils/request-validation";
+import { amountToCents } from "../../utils/money";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -44,8 +45,10 @@ export default defineEventHandler(async (event) => {
     console.log("expenses.ts, body:", body, ", method:", event.node.req.method);
 
     if (event.node.req.method === "POST") {
+      const amount = requireNumber(body.amount, "amount");
       const createData = {
-        amount: requireNumber(body.amount, "amount"),
+        amount,
+        amountCents: amountToCents(amount),
         currency: requireString(body.currency, "currency"),
         date: requireDate(body.date, "date"),
         location: requireString(body.location, "location"),
@@ -64,8 +67,10 @@ export default defineEventHandler(async (event) => {
     if (event.node.req.method === "PUT") {
       const expenseId = requireUuidLikeId(body.id, "id");
       const access = await requireExpenseWriteAccess(prisma, event, expenseId);
+      const amount = requireNumber(body.amount, "amount");
       const updateData = {
-        amount: requireNumber(body.amount, "amount"),
+        amount,
+        amountCents: amountToCents(amount),
         currency: requireString(body.currency, "currency"),
         date: requireDate(body.date, "date"),
         location: requireString(body.location, "location"),

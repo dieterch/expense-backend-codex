@@ -672,6 +672,9 @@ components:
         amount:
           type: number
           format: float
+        amountCents:
+          type: integer
+          description: Integer minor-unit amount derived from `amount` for safer money handling.
         currency:
           type: string
         date:
@@ -705,6 +708,9 @@ components:
         amount:
           type: number
           format: float
+        amountCents:
+          type: integer
+          description: Optional future-facing field; the server currently derives this from `amount`.
         currency:
           type: string
           description: Must match Currency.name

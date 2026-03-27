@@ -31,3 +31,9 @@ npm run db:backup
 ```
 
 Backups are written to `backups/` and are gitignored.
+
+After additive expense money-field migrations, you can backfill the integer minor-unit column with:
+
+```bash
+npm run db:backfill:amount-cents
+```

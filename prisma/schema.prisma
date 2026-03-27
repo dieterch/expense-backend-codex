@@ -51,6 +51,7 @@ model TripUser {
 model Expense {
   id          String   @id @default(uuid())
   amount      Float
+  amountCents Int?
   currency    String   // bleibt als String (Speichert den Namen) und dient als FK
   date        DateTime
   location    String
