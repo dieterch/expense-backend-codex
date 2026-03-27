@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test("admin can manage users, categories, and currencies", async ({ page }) => {
+  test.setTimeout(60_000);
+
   await page.goto("/login");
 
   await page.getByLabel("Email").fill("dev-admin@example.com");
@@ -44,9 +46,10 @@ test("admin can manage users, categories, and currencies", async ({ page }) => {
   await page.locator("tr", { hasText: categoryName }).getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("Name").fill(categoryNameUpdated);
   await page.getByRole("button", { name: "Save category" }).click();
-  await expect(page.getByText(categoryNameUpdated)).toBeVisible();
-  await page.locator("tr", { hasText: categoryNameUpdated }).getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByText(categoryNameUpdated)).toHaveCount(0);
+  const updatedCategoryRow = page.locator("tr", { hasText: categoryNameUpdated });
+  await expect(updatedCategoryRow).toBeVisible();
+  await updatedCategoryRow.getByRole("button", { name: "Delete" }).click();
+  await expect(updatedCategoryRow).toHaveCount(0);
 
   await page.getByRole("link", { name: "Currencies" }).click();
   await expect(page).toHaveURL(/\/admin\/currencies$/);
@@ -64,4 +67,14 @@ test("admin can manage users, categories, and currencies", async ({ page }) => {
   await expect(page.locator("tr", { hasText: `${currencyCode}!` })).toBeVisible();
   await page.locator("tr", { hasText: `${currencyCode}!` }).getByRole("button", { name: "Delete" }).click();
   await expect(page.locator("tr", { hasText: currencyCode })).toHaveCount(0);
+
+  await page.goto("/admin/expenses");
+  await expect(page).toHaveURL(/\/admin\/expenses$/);
+  await page.getByLabel("Search report").fill("Developer");
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export report" }).click();
+  const download = await downloadPromise;
+
+  expect(download.suggestedFilename()).toBe("expense-admin-report.xlsx");
 });
