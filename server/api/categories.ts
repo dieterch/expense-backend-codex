@@ -2,6 +2,8 @@
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireAdminUser, requireAuthenticatedUser } from "../../utils/access-control";
+import { normalizeRouteError } from "../../utils/route-error";
+import { ensureObjectBody, requireString, requireUuidLikeId } from "../../utils/request-validation";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "categories.ts");
@@ -22,13 +24,16 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const body = await readBody(event); // Verwende readBody statt useBody
+    const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody
     console.log("categories.ts, body:", body, ", method:", event.node.req.method);
 
     if (event.node.req.method === "POST") {
       requireAdminUser(event);
       return await prisma.category.create({
-        data: body,
+        data: {
+          name: requireString(body.name, "name"),
+          icon: requireString(body.icon, "icon"),
+        },
       });
     }
 
@@ -36,17 +41,20 @@ export default defineEventHandler(async (event) => {
       requireAdminUser(event);
       return await prisma.category.update({
         where: {
-          id: body.id,
+          id: requireUuidLikeId(body.id, "id"),
         },
-        data: body,
+        data: {
+          name: requireString(body.name, "name"),
+          icon: requireString(body.icon, "icon"),
+        },
       });
     }
 
     if (event.node.req.method === "DELETE") {
       requireAdminUser(event);
-      const category = await prisma.category.delete({
+      return await prisma.category.delete({
         where: {
-          id: body.id,
+          id: requireUuidLikeId(body.id, "id"),
         },
       });
     }
@@ -57,6 +65,6 @@ export default defineEventHandler(async (event) => {
       `Http Method ${event.node.req.method} created Database operation error:`,
       error
     );
-    throw error;
+    throw normalizeRouteError(error);
   }
 });

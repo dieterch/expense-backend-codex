@@ -2,6 +2,8 @@
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireTripAccess } from "../../utils/access-control";
+import { normalizeRouteError } from "../../utils/route-error";
+import { ensureObjectBody, requireUuidLikeId } from "../../utils/request-validation";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -11,7 +13,7 @@ export default defineEventHandler(async (event) => {
       return;
     }
 
-    const body = await readBody(event); // Verwende readBody statt useBody
+    const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody
     console.log(
       "tripusers.ts, body:",
       body,
@@ -20,10 +22,11 @@ export default defineEventHandler(async (event) => {
     );
 
     if (event.node.req.method === "POST") {
-      await requireTripAccess(prisma, event, body.id);
+      const tripId = requireUuidLikeId(body.id, "id");
+      await requireTripAccess(prisma, event, tripId);
       return await prisma.tripUser.findMany({
         where: {
-          tripId: body.id,
+          tripId,
           // tripId: "9bb38019-873f-4bf4-8a35-ac4dffb49bf7"
         },
         select: {
@@ -41,7 +44,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
   } catch (error) {
     console.error("Database operation error:", error);
-    throw error;
+    throw normalizeRouteError(error);
   }
 });
 

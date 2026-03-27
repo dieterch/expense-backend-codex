@@ -2,6 +2,15 @@
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireAdminUser, requireAuthenticatedUser, tripReadWhereForUser } from "../../utils/access-control";
+import { normalizeRouteError } from "../../utils/route-error";
+import {
+  ensureObjectBody,
+  optionalDate,
+  requireDate,
+  requireString,
+  requireStringArrayOfObjects,
+  requireUuidLikeId,
+} from "../../utils/request-validation";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "trips.ts");
@@ -37,18 +46,18 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const body = await readBody(event); // Verwende readBody statt useBody
+    const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody
     console.log("trips.ts, body:", JSON.stringify(body,null,2), ", method:", event.node.req.method);
 
     if (event.node.req.method === "POST") {
       requireAdminUser(event);
-      try {
-          return await prisma.trip.create({
-          data: body,
-        });
-      } catch (error) {
-        console.log('trips.ts POST error:', error )
-      }
+      return await prisma.trip.create({
+        data: {
+          name: requireString(body.name, "name"),
+          startDate: requireDate(body.startDate, "startDate"),
+          endDate: optionalDate(body.endDate, "endDate"),
+        },
+      });
     }
 
     interface UserInput {
@@ -67,35 +76,44 @@ export default defineEventHandler(async (event) => {
     // the frontend code.
     if (event.node.req.method === "PUT") {
       requireAdminUser(event);
+      const tripUsers = requireStringArrayOfObjects(body.users, "users", (item, index) => {
+        const user = ensureObjectBody(item, `users[${index}] must be an object`);
+        return {
+          userId: requireUuidLikeId(user.userId, `users[${index}].userId`),
+          tripId: requireUuidLikeId(user.tripId, `users[${index}].tripId`),
+        };
+      });
+      const tripId = requireUuidLikeId(body.id, "id");
       const updatedTrip = await prisma.trip.update({
-        where: { id: body.id },
+        where: { id: tripId },
         data: {
-          name: body.name,
-          startDate: body.startDate,
+          name: requireString(body.name, "name"),
+          startDate: requireDate(body.startDate, "startDate"),
+          endDate: optionalDate(body.endDate, "endDate"),
         },
       });
 
       // lösche alle tripUser des Trips
       await prisma.tripUser.deleteMany({
         where: {
-          tripId: body.id,
+          tripId,
         },
       });
 
       // und füge die selektierten user wieder ein.
       await Promise.all(
-        body.users.map(async (user: UserInput) => {
+        tripUsers.map(async (user: UserInput) => {
           await prisma.tripUser.upsert({
             where: {
               userId_tripId: {
                 userId: user.userId,
-                tripId: body.id,
+                tripId,
               },
             },
             update: {},
             create: {
               userId: user.userId,
-              tripId: body.id,
+              tripId,
             },
           });
         })
@@ -106,9 +124,9 @@ export default defineEventHandler(async (event) => {
 
     if (event.node.req.method === "DELETE") {
       requireAdminUser(event);
-      const trip = await prisma.trip.delete({
+      return await prisma.trip.delete({
         where: {
-          id: body.id,
+          id: requireUuidLikeId(body.id, "id"),
         },
       });
     }
@@ -119,6 +137,6 @@ export default defineEventHandler(async (event) => {
       `Http Method ${event.node.req.method} created Database operation error:`,
       error
     );
-    throw error;
+    throw normalizeRouteError(error);
   }
 });
