@@ -4,8 +4,8 @@ definePageMeta({
 });
 
 const auth = useAuth();
-const email = ref("member@example.com");
-const password = ref("legacy-password");
+const email = ref("dev-member@example.com");
+const password = ref("dev-member-password");
 const loading = ref(false);
 const errorMessage = ref("");
 
@@ -43,7 +43,7 @@ async function submit() {
                 <v-sheet color="primary" rounded="xl" class="pa-4 text-white">
                   <div class="text-caption text-uppercase mb-2">Quick start</div>
                   <div>Default local demo account:</div>
-                  <div class="font-weight-bold">member@example.com / legacy-password</div>
+                  <div class="font-weight-bold">dev-member@example.com / dev-member-password</div>
                 </v-sheet>
               </v-col>
 

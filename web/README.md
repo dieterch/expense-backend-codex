@@ -1,75 +1,52 @@
-# Nuxt Minimal Starter
+# Expense Web
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Nuxt 4 + Vuetify frontend for the expense-sharing app.
 
-## Setup
+## Development
 
-Make sure to install dependencies:
+Install dependencies:
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
-
-Start the development server on `http://localhost:3000`:
+Start the frontend:
 
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+By default the app targets `http://127.0.0.1:5678/api/v1`.
 
-Build the application for production:
+## Tests
+
+Run the frontend unit/component suite:
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+npm run test
 ```
 
-Locally preview production build:
+Run the Playwright smoke suite:
 
 ```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
+npm run test:e2e
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+The E2E command seeds the local demo data before launching the backend and frontend dev servers.
+
+Default seeded member login:
+
+- `dev-member@example.com`
+- `dev-member-password`
+
+## Playwright Linux dependencies
+
+If Playwright cannot launch Chromium on Linux with missing shared-library errors such as
+`libatk-1.0.so.0`, install the required browser system packages first:
+
+```bash
+npx playwright install chromium
+npx playwright install-deps chromium
+```
+
+The second command may require sudo/root privileges depending on the machine.
