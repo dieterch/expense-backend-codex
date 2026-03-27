@@ -1,6 +1,9 @@
 <script setup lang="ts">
 const route = useRoute();
 const auth = useAuth();
+const selectedTripState = useSelectedTrip();
+
+selectedTripState.init();
 
 const showShell = computed(() => route.path !== "/login");
 const navigationItems = computed(() => {
@@ -67,6 +70,14 @@ const navigationItems = computed(() => {
             </nav>
           </div>
           <div class="d-flex align-center ga-3">
+            <v-chip
+              v-if="selectedTripState.selectedTrip.value"
+              color="white"
+              variant="outlined"
+              :to="`/trips/${selectedTripState.selectedTrip.value.id}`"
+            >
+              {{ selectedTripState.selectedTrip.value.name }}
+            </v-chip>
             <v-chip
               v-if="auth.user.value"
               color="accent"

@@ -14,6 +14,7 @@ type Trip = {
 
 const api = useApi();
 const auth = useAuth();
+const selectedTripState = useSelectedTrip();
 const loading = ref(true);
 const trips = ref<Trip[]>([]);
 const errorMessage = ref("");
@@ -32,6 +33,15 @@ async function loadTrips() {
 }
 
 onMounted(loadTrips);
+
+function openTrip(trip: Trip) {
+  selectedTripState.setSelectedTrip({
+    id: trip.id,
+    name: trip.name,
+  });
+
+  return navigateTo(`/trips/${trip.id}`);
+}
 </script>
 
 <template>
@@ -105,7 +115,7 @@ onMounted(loadTrips);
                   color="primary"
                   block
                   append-icon="mdi-arrow-right"
-                  :to="`/trips/${trip.id}`"
+                  @click="openTrip(trip)"
                 >
                   Open trip
                 </v-btn>
