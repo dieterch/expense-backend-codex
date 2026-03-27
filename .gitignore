@@ -1,2 +1,7 @@
 backups/
 node_modules
+.env
+.nitro/
+.output/
+.tmp-tests/
+prisma/dev.db
