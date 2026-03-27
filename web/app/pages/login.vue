@@ -48,7 +48,7 @@ async function submit() {
   <v-container class="fill-height d-flex align-center justify-center">
     <div class="page-wrap py-16">
       <v-row align="center" justify="center">
-        <v-col cols="12" md="10" lg="8">
+        <v-col cols="12" md="11" lg="10" xl="9">
           <v-card color="surface" class="pa-4 pa-md-8">
             <v-row>
               <v-col cols="12" md="6" class="d-flex flex-column justify-center">
