@@ -4,8 +4,15 @@ definePageMeta({
 });
 
 import ExpenseEditorDialog from "~/components/trip/ExpenseEditorDialog.vue";
+import EstimationSettingsDialog from "~/components/trip/EstimationSettingsDialog.vue";
 import ExpenseReferenceSummary from "~/components/trip/ExpenseReferenceSummary.vue";
 import TripStatsDialog from "~/components/trip/TripStatsDialog.vue";
+import {
+  DEFAULT_ESTIMATION_SETTINGS,
+  estimateExpenseEur,
+  estimateTripTotal,
+  type EstimationSettings,
+} from "~/utils/expense-estimation";
 import { getExpenseDisplayAmount } from "~/utils/expense-reference";
 import { calculateTripStats } from "~/utils/trip-stats";
 
@@ -58,10 +65,14 @@ const route = useRoute();
 const api = useApi();
 const auth = useAuth();
 const selectedTripState = useSelectedTrip();
+const estimationSettingsState = useEstimationSettings();
+
+estimationSettingsState.init();
 
 const loading = ref(true);
 const saving = ref(false);
 const deleting = ref(false);
+const estimationSaving = ref(false);
 const errorMessage = ref("");
 const formErrorMessage = ref("");
 const trip = ref<Trip | null>(null);
@@ -71,6 +82,7 @@ const categories = ref<Category[]>([]);
 const currencies = ref<Currency[]>([]);
 const editorOpen = ref(false);
 const statsOpen = ref(false);
+const estimationSettingsOpen = ref(false);
 const editingExpenseId = ref<string | null>(null);
 const deleteTarget = ref<Expense | null>(null);
 
@@ -82,6 +94,13 @@ const form = reactive({
   description: "",
   categoryId: "",
   userId: "",
+});
+
+const estimationForm = reactive({
+  globalMarkupPercent: DEFAULT_ESTIMATION_SETTINGS.defaultMarkupBps / 100,
+  fixedFeeAmount: DEFAULT_ESTIMATION_SETTINGS.fixedFeeCents / 100,
+  weekendMarkupPercent: DEFAULT_ESTIMATION_SETTINGS.weekendSurchargeBps / 100,
+  currencyFields: [] as Array<{ currency: string; markupPercent: number | null }>,
 });
 
 async function loadTrip() {
@@ -146,6 +165,28 @@ function resetForm() {
 function openCreateDialog() {
   resetForm();
   editorOpen.value = true;
+}
+
+function populateEstimationForm() {
+  const settings = estimationSettingsState.settings.value;
+  const foreignCurrencies = Array.from(
+    new Set(currencies.value.map((entry) => entry.name).filter((currency) => currency !== "EUR")),
+  );
+
+  estimationForm.globalMarkupPercent = settings.defaultMarkupBps / 100;
+  estimationForm.fixedFeeAmount = settings.fixedFeeCents / 100;
+  estimationForm.weekendMarkupPercent = settings.weekendSurchargeBps / 100;
+  estimationForm.currencyFields = foreignCurrencies.map((currency) => ({
+    currency,
+    markupPercent: typeof settings.currencyMarkupOverrides[currency] === "number"
+      ? settings.currencyMarkupOverrides[currency] / 100
+      : null,
+  }));
+}
+
+function openEstimationSettingsDialog() {
+  populateEstimationForm();
+  estimationSettingsOpen.value = true;
 }
 
 function openEditDialog(expense: Expense) {
@@ -250,13 +291,50 @@ async function deleteExpense() {
   }
 }
 
+function buildEstimationSettingsFromForm(): EstimationSettings {
+  return {
+    defaultMarkupBps: Math.round(estimationForm.globalMarkupPercent * 100),
+    fixedFeeCents: Math.round(estimationForm.fixedFeeAmount * 100),
+    weekendSurchargeBps: Math.round(estimationForm.weekendMarkupPercent * 100),
+    currencyMarkupOverrides: Object.fromEntries(
+      estimationForm.currencyFields
+        .filter((entry) => entry.markupPercent !== null && Number.isFinite(entry.markupPercent))
+        .map((entry) => [entry.currency, Math.round((entry.markupPercent as number) * 100)]),
+    ),
+  };
+}
+
+function saveEstimationSettings() {
+  estimationSaving.value = true;
+
+  try {
+    estimationSettingsState.persist(buildEstimationSettingsFromForm());
+    estimationSettingsOpen.value = false;
+  } finally {
+    estimationSaving.value = false;
+  }
+}
+
+function resetEstimationSettings() {
+  estimationSettingsState.reset();
+  populateEstimationForm();
+}
+
+function getExpenseEstimate(expense: Expense) {
+  return estimateExpenseEur(expense, estimationSettingsState.settings.value);
+}
+
 const sortedExpenses = computed(() =>
   [...expenses.value].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
 );
 
 const stats = computed(() => calculateTripStats(sortedExpenses.value, trip.value?.startDate));
 const totalAmount = computed(() => stats.value.totalAmount.toFixed(2));
+const estimatedTripTotal = computed(() =>
+  estimateTripTotal(sortedExpenses.value, estimationSettingsState.settings.value).toFixed(2),
+);
 const hasForeignCurrencyExpenses = computed(() => sortedExpenses.value.some((expense) => expense.currency !== "EUR"));
+const canEstimateForeignCurrency = computed(() => currencies.value.some((currency) => currency.name !== "EUR"));
 
 onMounted(loadTrip);
 </script>
@@ -303,6 +381,9 @@ onMounted(loadTrip);
                     {{ hasForeignCurrencyExpenses ? "Tracked total (EUR ref)" : "Tracked total" }}
                   </div>
                   <div class="text-h4">€ {{ totalAmount }}</div>
+                  <div v-if="hasForeignCurrencyExpenses" class="text-caption mt-2">
+                    Estimated bank total € {{ estimatedTripTotal }}
+                  </div>
                 </v-sheet>
               </div>
 
@@ -322,6 +403,15 @@ onMounted(loadTrip);
                   @click="statsOpen = true"
                 >
                   Statistics
+                </v-btn>
+                <v-btn
+                  v-if="canEstimateForeignCurrency"
+                  variant="tonal"
+                  color="secondary"
+                  prepend-icon="mdi-tune-vertical"
+                  @click="openEstimationSettingsDialog"
+                >
+                  Estimation
                 </v-btn>
               </div>
             </v-card>
@@ -398,6 +488,9 @@ onMounted(loadTrip);
                     :reference-rate="expense.referenceRate"
                     :reference-rate-date="expense.referenceRateDate"
                     :reference-rate-provider="expense.referenceRateProvider"
+                    :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
+                    :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
+                    :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
                   />
                 </td>
                 <td class="text-right">
@@ -462,6 +555,14 @@ onMounted(loadTrip);
     :duration-days="stats.durationDays"
     :average-per-day="stats.averagePerDay"
     :category-breakdown="stats.categoryBreakdown"
+  />
+
+  <EstimationSettingsDialog
+    v-model="estimationSettingsOpen"
+    :saving="estimationSaving"
+    :form="estimationForm"
+    @submit="saveEstimationSettings"
+    @reset="resetEstimationSettings"
   />
 
   <v-dialog

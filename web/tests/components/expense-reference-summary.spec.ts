@@ -14,6 +14,9 @@ describe("expense reference summary", () => {
         referenceRate: 0.91,
         referenceRateDate: "2025-02-28",
         referenceRateProvider: "Frankfurter",
+        estimatedTotalEurAmount: 9.58,
+        estimatedBankMarkupBps: 250,
+        estimatedFixedFeeCents: 25,
       },
     });
 
@@ -21,6 +24,9 @@ describe("expense reference summary", () => {
     expect(wrapper.text()).toContain("Frankfurter");
     expect(wrapper.text()).toContain("2025-02-28");
     expect(wrapper.text()).toContain("1 USD = 0.9100 EUR");
+    expect(wrapper.text()).toContain("Estimated EUR 9.58");
+    expect(wrapper.text()).toContain("markup 2.50%");
+    expect(wrapper.text()).toContain("fee EUR 0.25");
   });
 
   it("renders nothing for EUR expenses", async () => {

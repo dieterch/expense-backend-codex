@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test";
 
 test("member can create, edit, delete, and sign back out", async ({ page }) => {
+  test.setTimeout(60_000);
+
   await page.goto("/login");
 
   await page.getByLabel("Email").fill("dev-member@example.com");
@@ -17,6 +19,11 @@ test("member can create, edit, delete, and sign back out", async ({ page }) => {
   const expenseName = `Playwright expense ${Date.now()}`;
   const updatedExpenseName = `${expenseName} updated`;
 
+  await page.getByRole("button", { name: "Estimation" }).click();
+  await page.getByLabel("Default markup (%)").fill("2.50");
+  await page.getByLabel("Fixed fee (EUR)").fill("0.25");
+  await page.getByRole("button", { name: "Save settings" }).click();
+
   await page.getByRole("button", { name: "Add expense" }).click();
   await page.getByLabel("Amount").fill("19.75");
   await page.getByRole("combobox", { name: "Currency" }).focus();
@@ -27,9 +34,11 @@ test("member can create, edit, delete, and sign back out", async ({ page }) => {
   await page.getByRole("button", { name: "Create expense" }).click();
 
   await expect(page.getByText(expenseName)).toBeVisible();
-  await expect(page.getByText("Reference EUR")).toBeVisible();
-
   const expenseRow = page.locator("tr", { hasText: expenseName });
+  await expect(expenseRow.getByText("Reference EUR")).toBeVisible();
+  await expect(expenseRow.getByText("Estimated EUR")).toBeVisible();
+  await expect(expenseRow.getByText("markup 2.50%")).toBeVisible();
+
   await expenseRow.getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("Description").fill(updatedExpenseName);
   await page.getByRole("button", { name: "Save changes" }).click();
