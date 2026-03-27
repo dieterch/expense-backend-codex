@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("admin can manage users, categories, and currencies", async ({ page }) => {
+test("admin can manage trips, users, categories, and currencies", async ({ page }) => {
   test.setTimeout(60_000);
 
   await page.goto("/login");
@@ -13,10 +13,25 @@ test("admin can manage users, categories, and currencies", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Users" })).toBeVisible();
 
   const suffix = Date.now();
+  const tripName = `Playwright Trip ${suffix}`;
+  const tripNameUpdated = `${tripName} Updated`;
   const userEmail = `playwright-admin-${suffix}@example.com`;
   const categoryName = `Playwright Category ${suffix}`;
   const categoryNameUpdated = `${categoryName} Updated`;
   const currencyCode = `PW${String(suffix).slice(-2)}`;
+
+  await page.getByRole("button", { name: "Add trip" }).click();
+  await page.getByLabel("Trip name").fill(tripName);
+  await page.getByLabel("Start date").fill("2026-03-27");
+  await page.getByRole("checkbox", { name: /Developer Admin/ }).check();
+  await page.getByRole("button", { name: "Create trip" }).click();
+  await expect(page.getByText(tripName)).toBeVisible();
+
+  const tripCard = page.locator(".v-card", { hasText: tripName });
+  await tripCard.getByRole("button", { name: "Edit" }).click();
+  await page.getByLabel("Trip name").fill(tripNameUpdated);
+  await page.getByRole("button", { name: "Save trip" }).click();
+  await expect(page.getByText(tripNameUpdated)).toBeVisible();
 
   await page.getByRole("link", { name: "Users" }).click();
   await expect(page).toHaveURL(/\/admin\/users$/);
@@ -77,4 +92,8 @@ test("admin can manage users, categories, and currencies", async ({ page }) => {
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toBe("expense-admin-report.xlsx");
+
+  await page.goto("/trips");
+  await page.locator(".v-card", { hasText: tripNameUpdated }).getByRole("button", { name: "Delete" }).click();
+  await expect(page.getByText(tripNameUpdated)).toHaveCount(0);
 });

@@ -3,6 +3,8 @@ definePageMeta({
   middleware: "auth",
 });
 
+import TripEditorDialog from "~/components/admin/TripEditorDialog.vue";
+
 type Trip = {
   id: string;
   name: string;
@@ -12,19 +14,44 @@ type Trip = {
   expenses?: Array<{ id: string; amount: number; amountCents?: number }>;
 };
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+};
+
 const api = useApi();
 const auth = useAuth();
 const selectedTripState = useSelectedTrip();
 const loading = ref(true);
+const saving = ref(false);
+const deletingId = ref<string | null>(null);
+const dialogOpen = ref(false);
+const editingId = ref<string | null>(null);
 const trips = ref<Trip[]>([]);
+const availableUsers = ref<User[]>([]);
 const errorMessage = ref("");
+const form = reactive({
+  name: "",
+  startDate: new Date().toISOString().slice(0, 10),
+  endDate: "",
+  userIds: [] as string[],
+});
 
 async function loadTrips() {
   loading.value = true;
   errorMessage.value = "";
 
   try {
-    trips.value = await api.get<Trip[]>("/trips");
+    const requests: Array<Promise<unknown>> = [api.get<Trip[]>("/trips")];
+
+    if (auth.isAdmin.value) {
+      requests.push(api.get<User[]>("/users"));
+    }
+
+    const [tripsData, usersData] = await Promise.all(requests);
+    trips.value = tripsData as Trip[];
+    availableUsers.value = (usersData as User[] | undefined) || [];
   } catch (error: any) {
     errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to load trips";
   } finally {
@@ -42,6 +69,76 @@ function openTrip(trip: Trip) {
 
   return navigateTo(`/trips/${trip.id}`);
 }
+
+function resetForm() {
+  form.name = "";
+  form.startDate = new Date().toISOString().slice(0, 10);
+  form.endDate = "";
+  form.userIds = [];
+  editingId.value = null;
+}
+
+function openCreateDialog() {
+  resetForm();
+  dialogOpen.value = true;
+}
+
+function openEditDialog(trip: Trip) {
+  editingId.value = trip.id;
+  form.name = trip.name;
+  form.startDate = trip.startDate.slice(0, 10);
+  form.endDate = trip.endDate ? trip.endDate.slice(0, 10) : "";
+  form.userIds = (trip.users || []).map((tripUser) => tripUser.user.id);
+  dialogOpen.value = true;
+}
+
+function normalizeTripPayload(tripId?: string) {
+  return {
+    ...(tripId ? { id: tripId } : {}),
+    name: form.name.trim(),
+    startDate: new Date(`${form.startDate}T12:00:00.000Z`).toISOString(),
+    endDate: form.endDate ? new Date(`${form.endDate}T12:00:00.000Z`).toISOString() : null,
+    users: form.userIds.map((userId) => ({
+      userId,
+      tripId: tripId || "pending-trip-id",
+    })),
+  };
+}
+
+async function saveTrip() {
+  saving.value = true;
+  errorMessage.value = "";
+
+  try {
+    if (editingId.value) {
+      await api.put<Trip, Record<string, unknown>>("/trips", normalizeTripPayload(editingId.value));
+    } else {
+      await api.post<Trip, Record<string, unknown>>("/trips", normalizeTripPayload());
+    }
+
+    dialogOpen.value = false;
+    resetForm();
+    await loadTrips();
+  } catch (error: any) {
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to save trip";
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function deleteTrip(trip: Trip) {
+  deletingId.value = trip.id;
+  errorMessage.value = "";
+
+  try {
+    await api.delete("/trips", { id: trip.id });
+    trips.value = trips.value.filter((entry) => entry.id !== trip.id);
+  } catch (error: any) {
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to delete trip";
+  } finally {
+    deletingId.value = null;
+  }
+}
 </script>
 
 <template>
@@ -56,9 +153,14 @@ function openTrip(trip: Trip) {
             <span v-if="auth.user.value">as {{ auth.user.value.email }}</span>.
           </p>
         </div>
-        <v-btn color="primary" prepend-icon="mdi-refresh" @click="loadTrips">
-          Refresh
-        </v-btn>
+        <div class="d-flex flex-wrap ga-2">
+          <v-btn v-if="auth.isAdmin.value" color="secondary" prepend-icon="mdi-bag-suitcase" @click="openCreateDialog">
+            Add trip
+          </v-btn>
+          <v-btn color="primary" prepend-icon="mdi-refresh" @click="loadTrips">
+            Refresh
+          </v-btn>
+        </div>
       </div>
 
       <v-alert
@@ -100,6 +202,9 @@ function openTrip(trip: Trip) {
                 ·
                 {{ trip.expenses?.length || 0 }} expenses
               </div>
+              <div v-if="trip.endDate" class="text-caption text-medium-emphasis mb-3">
+                Ends {{ new Date(trip.endDate).toLocaleDateString() }}
+              </div>
               <div class="d-flex flex-wrap ga-2 mb-6">
                 <v-chip
                   v-for="tripUser in trip.users?.slice(0, 3) || []"
@@ -110,11 +215,30 @@ function openTrip(trip: Trip) {
                   {{ tripUser.user.name }}
                 </v-chip>
               </div>
-              <div class="mt-auto">
+              <div class="mt-auto d-flex flex-wrap ga-2">
+                <v-btn
+                  v-if="auth.isAdmin.value"
+                  color="primary"
+                  variant="tonal"
+                  prepend-icon="mdi-pencil"
+                  @click="openEditDialog(trip)"
+                >
+                  Edit
+                </v-btn>
+                <v-btn
+                  v-if="auth.isAdmin.value"
+                  color="error"
+                  variant="tonal"
+                  prepend-icon="mdi-delete-outline"
+                  :loading="deletingId === trip.id"
+                  @click="deleteTrip(trip)"
+                >
+                  Delete
+                </v-btn>
                 <v-btn
                   color="primary"
-                  block
                   append-icon="mdi-arrow-right"
+                  class="flex-grow-1"
                   @click="openTrip(trip)"
                 >
                   Open trip
@@ -133,4 +257,14 @@ function openTrip(trip: Trip) {
       </v-card>
     </div>
   </v-container>
+
+  <TripEditorDialog
+    v-model="dialogOpen"
+    :saving="saving"
+    :title="editingId ? 'Edit trip' : 'Create trip'"
+    :submit-label="editingId ? 'Save trip' : 'Create trip'"
+    :form="form"
+    :users="availableUsers"
+    @submit="saveTrip"
+  />
 </template>

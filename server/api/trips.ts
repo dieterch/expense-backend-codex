@@ -15,6 +15,23 @@ export default defineEventHandler(async (event) => {
   try {
     const user = requireAuthenticatedUser(event);
 
+    function parseTripUsers(input: unknown, tripId: string) {
+      if (input === undefined) {
+        return [];
+      }
+
+      return requireStringArrayOfObjects(input, "users", (item, index) => {
+        const tripUser = ensureObjectBody(item, `users[${index}] must be an object`);
+        return {
+          userId: requireUuidLikeId(tripUser.userId, `users[${index}].userId`),
+          tripId: requireUuidLikeId(tripUser.tripId, `users[${index}].tripId`),
+        };
+      }).map((tripUser) => ({
+        ...tripUser,
+        tripId,
+      }));
+    }
+
     if (event.node.req.method === "GET") {
       console.log("trips.ts, method:", event.node.req.method);
       return await prisma.trip.findMany({
@@ -22,6 +39,7 @@ export default defineEventHandler(async (event) => {
         select: {
           id: true,
           startDate: true,
+          endDate: true,
           name: true,
           users: {
             select: {
@@ -44,13 +62,26 @@ export default defineEventHandler(async (event) => {
 
     if (event.node.req.method === "POST") {
       requireAdminUser(event);
-      return await prisma.trip.create({
+      const createdTrip = await prisma.trip.create({
         data: {
           name: requireString(body.name, "name"),
           startDate: requireDate(body.startDate, "startDate"),
           endDate: optionalDate(body.endDate, "endDate"),
         },
       });
+
+      const tripUsers = parseTripUsers(body.users, createdTrip.id);
+
+      if (tripUsers.length) {
+        await prisma.tripUser.createMany({
+          data: tripUsers.map((tripUser) => ({
+            userId: tripUser.userId,
+            tripId: createdTrip.id,
+          })),
+        });
+      }
+
+      return createdTrip;
     }
 
     interface UserInput {
@@ -69,14 +100,8 @@ export default defineEventHandler(async (event) => {
     // the frontend code.
     if (event.node.req.method === "PUT") {
       requireAdminUser(event);
-      const tripUsers = requireStringArrayOfObjects(body.users, "users", (item, index) => {
-        const user = ensureObjectBody(item, `users[${index}] must be an object`);
-        return {
-          userId: requireUuidLikeId(user.userId, `users[${index}].userId`),
-          tripId: requireUuidLikeId(user.tripId, `users[${index}].tripId`),
-        };
-      });
       const tripId = requireUuidLikeId(body.id, "id");
+      const tripUsers = parseTripUsers(body.users, tripId);
       const updatedTrip = await prisma.trip.update({
         where: { id: tripId },
         data: {

@@ -33,8 +33,8 @@ test("member can create, edit, delete, and sign back out", async ({ page }) => {
   await page.getByLabel("Description").fill(expenseName);
   await page.getByRole("button", { name: "Create expense" }).click();
 
-  await expect(page.getByText(expenseName)).toBeVisible();
   const expenseRow = page.locator("tr", { hasText: expenseName });
+  await expect(expenseRow).toBeVisible();
   await expect(expenseRow.getByText("Reference EUR")).toBeVisible();
   await expect(expenseRow.getByText("Estimated EUR")).toBeVisible();
   await expect(expenseRow.getByText("markup 2.50%")).toBeVisible();
@@ -43,13 +43,12 @@ test("member can create, edit, delete, and sign back out", async ({ page }) => {
   await page.getByLabel("Description").fill(updatedExpenseName);
   await page.getByRole("button", { name: "Save changes" }).click();
 
-  await expect(page.getByText(updatedExpenseName)).toBeVisible();
-
   const updatedRow = page.locator("tr", { hasText: updatedExpenseName });
+  await expect(updatedRow).toBeVisible();
   await updatedRow.getByRole("button", { name: "Delete" }).click();
   await page.getByRole("button", { name: "Confirm delete" }).click();
 
-  await expect(page.getByText(updatedExpenseName)).toHaveCount(0);
+  await expect(updatedRow).toHaveCount(0);
 
   await page.getByRole("button", { name: "Sign out" }).click();
 

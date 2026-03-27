@@ -7,6 +7,7 @@ import ExpenseEditorDialog from "~/components/trip/ExpenseEditorDialog.vue";
 import EstimationSettingsDialog from "~/components/trip/EstimationSettingsDialog.vue";
 import ExpenseReferenceSummary from "~/components/trip/ExpenseReferenceSummary.vue";
 import TripStatsDialog from "~/components/trip/TripStatsDialog.vue";
+import CategoryIcon from "~/components/shared/CategoryIcon.vue";
 import {
   DEFAULT_ESTIMATION_SETTINGS,
   estimateExpenseEur,
@@ -444,7 +445,7 @@ onMounted(loadTrip);
           </v-col>
         </v-row>
 
-        <v-card color="surface" class="pa-4 pa-md-6">
+          <v-card color="surface" class="pa-4 pa-md-6">
           <div class="d-flex justify-space-between align-center mb-4">
             <div class="text-h5">Expenses</div>
             <v-chip color="accent" variant="tonal">
@@ -452,73 +453,158 @@ onMounted(loadTrip);
             </v-chip>
           </div>
 
-          <v-table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Payer</th>
-                <th>Category</th>
-                <th>Location</th>
-                <th class="text-right">Amount</th>
-                <th class="text-right">EUR view</th>
-                <th class="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="expense in sortedExpenses" :key="expense.id">
-                <td>
+          <div class="d-none d-md-block table-shell">
+            <v-table>
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Payer</th>
+                  <th>Category</th>
+                  <th>Location</th>
+                  <th class="text-right">Amount</th>
+                  <th class="text-right">EUR view</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="expense in sortedExpenses" :key="expense.id">
+                  <td>
+                    <div class="font-weight-medium">{{ expense.description || "Expense" }}</div>
+                    <div class="text-caption text-medium-emphasis">
+                      {{ new Date(expense.date).toLocaleDateString() }}
+                    </div>
+                  </td>
+                  <td>{{ expense.user?.name || "Unknown" }}</td>
+                  <td>
+                    <div class="d-flex align-center">
+                      <CategoryIcon :icon="expense.category?.icon" />
+                      <span class="ml-2">{{ expense.category?.name || "Uncategorized" }}</span>
+                    </div>
+                  </td>
+                  <td>{{ expense.location }}</td>
+                  <td class="text-right">
+                    <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
+                    <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
+                  </td>
+                  <td class="text-right">
+                    <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
+                    <ExpenseReferenceSummary
+                      :amount="expense.amount"
+                      :currency="expense.currency"
+                      :reference-eur-amount="expense.referenceEurAmount"
+                      :reference-rate="expense.referenceRate"
+                      :reference-rate-date="expense.referenceRateDate"
+                      :reference-rate-provider="expense.referenceRateProvider"
+                      :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
+                      :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
+                      :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
+                    />
+                  </td>
+                  <td class="text-right">
+                    <div v-if="canManageExpense(expense)" class="d-inline-flex ga-2">
+                      <v-btn
+                        size="small"
+                        variant="tonal"
+                        color="primary"
+                        prepend-icon="mdi-pencil"
+                        @click="openEditDialog(expense)"
+                      >
+                        Edit
+                      </v-btn>
+                      <v-btn
+                        size="small"
+                        variant="tonal"
+                        color="error"
+                        prepend-icon="mdi-delete-outline"
+                        @click="deleteTarget = expense"
+                      >
+                        Delete
+                      </v-btn>
+                    </div>
+                    <span v-else class="text-caption text-medium-emphasis">View only</span>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+
+          <div class="d-md-none mobile-stack">
+            <v-card
+              v-for="expense in sortedExpenses"
+              :key="expense.id"
+              color="background"
+              class="record-card pa-4"
+            >
+              <div class="d-flex justify-space-between ga-3 mb-3">
+                <div>
                   <div class="font-weight-medium">{{ expense.description || "Expense" }}</div>
-                  <div class="text-caption text-medium-emphasis">
-                    {{ new Date(expense.date).toLocaleDateString() }}
+                  <div class="text-caption text-medium-emphasis">{{ new Date(expense.date).toLocaleDateString() }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-weight-bold">{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
+                  <div class="text-caption text-medium-emphasis">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
+                </div>
+              </div>
+
+              <div class="meta-grid mb-3">
+                <div>
+                  <div class="text-caption text-medium-emphasis">Payer</div>
+                  <div>{{ expense.user?.name || "Unknown" }}</div>
+                </div>
+                <div>
+                  <div class="text-caption text-medium-emphasis">Location</div>
+                  <div>{{ expense.location }}</div>
+                </div>
+                <div>
+                  <div class="text-caption text-medium-emphasis">Category</div>
+                  <div class="d-flex align-center">
+                    <CategoryIcon :icon="expense.category?.icon" />
+                    <span class="ml-2">{{ expense.category?.name || "Uncategorized" }}</span>
                   </div>
-                </td>
-                <td>{{ expense.user?.name || "Unknown" }}</td>
-                <td>{{ expense.category?.name || "Uncategorized" }}</td>
-                <td>{{ expense.location }}</td>
-                <td class="text-right">
-                  <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
-                  <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
-                </td>
-                <td class="text-right">
-                  <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
-                  <ExpenseReferenceSummary
-                    :amount="expense.amount"
-                    :currency="expense.currency"
-                    :reference-eur-amount="expense.referenceEurAmount"
-                    :reference-rate="expense.referenceRate"
-                    :reference-rate-date="expense.referenceRateDate"
-                    :reference-rate-provider="expense.referenceRateProvider"
-                    :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
-                    :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
-                    :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
-                  />
-                </td>
-                <td class="text-right">
-                  <div v-if="canManageExpense(expense)" class="d-inline-flex ga-2">
-                    <v-btn
-                      size="small"
-                      variant="tonal"
-                      color="primary"
-                      prepend-icon="mdi-pencil"
-                      @click="openEditDialog(expense)"
-                    >
-                      Edit
-                    </v-btn>
-                    <v-btn
-                      size="small"
-                      variant="tonal"
-                      color="error"
-                      prepend-icon="mdi-delete-outline"
-                      @click="deleteTarget = expense"
-                    >
-                      Delete
-                    </v-btn>
-                  </div>
-                  <span v-else class="text-caption text-medium-emphasis">View only</span>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                </div>
+                <div>
+                  <div class="text-caption text-medium-emphasis">Minor units</div>
+                  <div>{{ expense.amountCents }} cents</div>
+                </div>
+              </div>
+
+              <ExpenseReferenceSummary
+                :amount="expense.amount"
+                :currency="expense.currency"
+                :reference-eur-amount="expense.referenceEurAmount"
+                :reference-rate="expense.referenceRate"
+                :reference-rate-date="expense.referenceRateDate"
+                :reference-rate-provider="expense.referenceRateProvider"
+                :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
+                :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
+                :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
+              />
+
+              <div class="d-flex flex-wrap ga-2 mt-4">
+                <v-btn
+                  v-if="canManageExpense(expense)"
+                  size="small"
+                  variant="tonal"
+                  color="primary"
+                  prepend-icon="mdi-pencil"
+                  @click="openEditDialog(expense)"
+                >
+                  Edit
+                </v-btn>
+                <v-btn
+                  v-if="canManageExpense(expense)"
+                  size="small"
+                  variant="tonal"
+                  color="error"
+                  prepend-icon="mdi-delete-outline"
+                  @click="deleteTarget = expense"
+                >
+                  Delete
+                </v-btn>
+                <span v-if="!canManageExpense(expense)" class="text-caption text-medium-emphasis">View only</span>
+              </div>
+            </v-card>
+          </div>
 
           <v-alert
             v-if="!sortedExpenses.length"

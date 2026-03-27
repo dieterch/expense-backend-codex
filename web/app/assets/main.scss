@@ -51,3 +51,61 @@ body {
   letter-spacing: 0.02em;
   text-transform: none;
 }
+
+.shell-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.shell-bar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.table-shell {
+  overflow-x: auto;
+}
+
+.mobile-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.record-card {
+  border: 1px solid rgba(23, 49, 62, 0.08);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.category-icon {
+  flex-shrink: 0;
+}
+
+@media (max-width: 959px) {
+  .shell-bar {
+    min-height: 72px;
+  }
+
+  .page-wrap {
+    width: min(100vw - 24px, 1120px);
+  }
+}
+
+@media (max-width: 599px) {
+  .meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .shell-bar-actions {
+    gap: 8px;
+  }
+}

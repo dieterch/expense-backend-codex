@@ -1,11 +1,16 @@
 <script setup lang="ts">
+import { useDisplay } from "vuetify";
+
 const route = useRoute();
 const auth = useAuth();
 const selectedTripState = useSelectedTrip();
+const display = useDisplay();
+const drawerOpen = ref(false);
 
 selectedTripState.init();
 
 const showShell = computed(() => route.path !== "/login");
+const isMobile = computed(() => display.mdAndDown.value);
 const navigationItems = computed(() => {
   const items = [
     { title: "Trips", to: "/trips" },
@@ -21,6 +26,10 @@ const navigationItems = computed(() => {
   }
 
   return items;
+});
+
+watch(() => route.path, () => {
+  drawerOpen.value = false;
 });
 </script>
 
@@ -50,13 +59,21 @@ const navigationItems = computed(() => {
 
     <template v-else-if="showShell">
       <v-app-bar color="primary" density="comfortable" flat>
-        <div class="page-wrap d-flex align-center justify-space-between w-100">
-          <div class="d-flex align-center flex-wrap ga-4">
+        <div class="page-wrap shell-bar w-100">
+          <div class="d-flex align-center ga-3">
+            <v-btn
+              v-if="isMobile"
+              icon="mdi-menu"
+              color="white"
+              variant="text"
+              aria-label="Open navigation"
+              @click="drawerOpen = !drawerOpen"
+            />
             <div class="d-flex flex-column">
               <span class="text-caption page-title text-white">Expense Web</span>
               <strong class="text-white">Trips and shared costs</strong>
             </div>
-            <nav class="d-flex flex-wrap ga-2">
+            <nav v-if="!isMobile" class="d-flex flex-wrap ga-2">
               <v-btn
                 v-for="item in navigationItems"
                 :key="item.to"
@@ -69,7 +86,7 @@ const navigationItems = computed(() => {
               </v-btn>
             </nav>
           </div>
-          <div class="d-flex align-center ga-3">
+          <div class="shell-bar-actions">
             <v-chip
               v-if="selectedTripState.selectedTrip.value"
               color="white"
@@ -95,6 +112,35 @@ const navigationItems = computed(() => {
           </div>
         </div>
       </v-app-bar>
+
+      <v-navigation-drawer
+        v-if="isMobile"
+        v-model="drawerOpen"
+        location="left"
+        color="surface"
+        temporary
+      >
+        <div class="pa-4">
+          <div class="text-overline text-secondary page-title font-weight-bold mb-1">Navigate</div>
+          <div class="text-h6 mb-4">Expense Web</div>
+          <div class="d-flex flex-column ga-2">
+            <v-btn
+              v-for="item in navigationItems"
+              :key="item.to"
+              :to="item.to"
+              color="primary"
+              variant="tonal"
+              block
+              class="justify-start"
+            >
+              {{ item.title }}
+            </v-btn>
+            <v-btn color="secondary" prepend-icon="mdi-logout" block @click="auth.logout">
+              Sign out
+            </v-btn>
+          </div>
+        </div>
+      </v-navigation-drawer>
       <v-main>
         <slot />
       </v-main>

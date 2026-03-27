@@ -4,6 +4,7 @@ definePageMeta({
 });
 
 import { exportAdminExpensesToWorkbook } from "~/utils/admin-expense-report";
+import CategoryIcon from "~/components/shared/CategoryIcon.vue";
 
 type Expense = {
   id: string;
@@ -208,36 +209,85 @@ onMounted(loadExpenses);
         <v-skeleton-loader v-if="loading" type="table-heading, table-tbody" />
 
         <template v-else>
-          <v-table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Trip</th>
-                <th>Payer</th>
-                <th>Category</th>
-                <th>Description</th>
-                <th>Location</th>
-                <th class="text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="expense in filteredExpenses" :key="expense.id">
-                <td>{{ new Date(expense.date).toLocaleDateString() }}</td>
-                <td>{{ expense.trip?.name || "Unknown trip" }}</td>
-                <td>
-                  <div>{{ expense.user?.name || "Unknown payer" }}</div>
-                  <div class="text-caption text-medium-emphasis">{{ expense.user?.email || "" }}</div>
-                </td>
-                <td>{{ expense.category?.name || "Uncategorized" }}</td>
-                <td>{{ expense.description || "Expense" }}</td>
-                <td>{{ expense.location }}</td>
-                <td class="text-right">
-                  <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
+          <div class="d-none d-md-block table-shell">
+            <v-table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Trip</th>
+                  <th>Payer</th>
+                  <th>Category</th>
+                  <th>Description</th>
+                  <th>Location</th>
+                  <th class="text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="expense in filteredExpenses" :key="expense.id">
+                  <td>{{ new Date(expense.date).toLocaleDateString() }}</td>
+                  <td>{{ expense.trip?.name || "Unknown trip" }}</td>
+                  <td>
+                    <div>{{ expense.user?.name || "Unknown payer" }}</div>
+                    <div class="text-caption text-medium-emphasis">{{ expense.user?.email || "" }}</div>
+                  </td>
+                  <td>
+                    <div class="d-flex align-center">
+                      <CategoryIcon :icon="expense.category?.icon" />
+                      <span class="ml-2">{{ expense.category?.name || "Uncategorized" }}</span>
+                    </div>
+                  </td>
+                  <td>{{ expense.description || "Expense" }}</td>
+                  <td>{{ expense.location }}</td>
+                  <td class="text-right">
+                    <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
+                    <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+
+          <div class="d-md-none mobile-stack">
+            <v-card
+              v-for="expense in filteredExpenses"
+              :key="expense.id"
+              color="background"
+              class="record-card pa-4"
+            >
+              <div class="d-flex justify-space-between ga-3 mb-3">
+                <div>
+                  <div class="font-weight-medium">{{ expense.description || "Expense" }}</div>
+                  <div class="text-caption text-medium-emphasis">{{ new Date(expense.date).toLocaleDateString() }}</div>
+                </div>
+                <div class="text-right">
+                  <div class="font-weight-bold">{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
                   <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
+                </div>
+              </div>
+
+              <div class="meta-grid">
+                <div>
+                  <div class="text-caption text-medium-emphasis">Trip</div>
+                  <div>{{ expense.trip?.name || "Unknown trip" }}</div>
+                </div>
+                <div>
+                  <div class="text-caption text-medium-emphasis">Payer</div>
+                  <div>{{ expense.user?.name || "Unknown payer" }}</div>
+                </div>
+                <div>
+                  <div class="text-caption text-medium-emphasis">Category</div>
+                  <div class="d-flex align-center">
+                    <CategoryIcon :icon="expense.category?.icon" />
+                    <span class="ml-2">{{ expense.category?.name || "Uncategorized" }}</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-caption text-medium-emphasis">Location</div>
+                  <div>{{ expense.location }}</div>
+                </div>
+              </div>
+            </v-card>
+          </div>
 
           <v-alert v-if="!filteredExpenses.length" type="info" variant="tonal" class="mt-4">
             No expenses match the current report filters.

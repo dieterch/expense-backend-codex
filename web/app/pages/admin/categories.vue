@@ -4,6 +4,7 @@ definePageMeta({
 });
 
 import CategoryEditorDialog from "~/components/admin/CategoryEditorDialog.vue";
+import CategoryIcon from "~/components/shared/CategoryIcon.vue";
 
 type Category = {
   id: string;
@@ -139,7 +140,12 @@ onMounted(loadCategories);
             <tbody>
               <tr v-for="category in categories" :key="category.id">
                 <td>{{ category.name }}</td>
-                <td><code>{{ category.icon }}</code></td>
+                <td>
+                  <div class="d-flex align-center">
+                    <CategoryIcon :icon="category.icon" />
+                    <code class="ml-2">{{ category.icon }}</code>
+                  </div>
+                </td>
                 <td class="text-right">{{ category.expenses?.length || 0 }}</td>
                 <td class="text-right">
                   <div class="d-inline-flex ga-2">
