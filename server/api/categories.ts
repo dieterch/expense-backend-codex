@@ -1,6 +1,7 @@
 // server/api/categories.ts
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
+import { requireAdminUser, requireAuthenticatedUser } from "../../utils/access-control";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "categories.ts");
@@ -9,6 +10,8 @@ export default defineEventHandler(async (event) => {
       console.log("OPTIONS call detected, will not forward this to Database.");
       return;
     }
+
+    requireAuthenticatedUser(event);
 
     if (event.node.req.method === "GET") {
       console.log("categories.ts, method:", event.node.req.method);
@@ -23,12 +26,14 @@ export default defineEventHandler(async (event) => {
     console.log("categories.ts, body:", body, ", method:", event.node.req.method);
 
     if (event.node.req.method === "POST") {
+      requireAdminUser(event);
       return await prisma.category.create({
         data: body,
       });
     }
 
     if (event.node.req.method === "PUT") {
+      requireAdminUser(event);
       return await prisma.category.update({
         where: {
           id: body.id,
@@ -38,13 +43,20 @@ export default defineEventHandler(async (event) => {
     }
 
     if (event.node.req.method === "DELETE") {
+      requireAdminUser(event);
       const category = await prisma.category.delete({
         where: {
           id: body.id,
         },
       });
     }
+
+    throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
   } catch (error) {
-    `Http Method ${event.node.req.method} created Database operation error: ${error}`;
+    console.error(
+      `Http Method ${event.node.req.method} created Database operation error:`,
+      error
+    );
+    throw error;
   }
 });

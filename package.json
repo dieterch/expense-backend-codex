@@ -4,7 +4,8 @@
     "build": "nitro build",
     "dev": "nitro dev --host 0.0.0.0 --port 5678",
     "prepare": "nitro prepare",
-    "preview": "node .output/server/index.mjs"
+    "preview": "node .output/server/index.mjs",
+    "test": "tsx --test tests/*.test.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -12,7 +13,8 @@
   "devDependencies": {
     "@types/node-jose": "^1.1.13",
     "nitropack": "latest",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "tsx": "^4.21.0"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

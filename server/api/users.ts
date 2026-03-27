@@ -1,6 +1,7 @@
 // server/api/users.ts
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
+import { requireAdminUser } from "../../utils/access-control";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -10,6 +11,8 @@ export default defineEventHandler(async (event) => {
       return;
     }
 
+    requireAdminUser(event);
+
     if (event.node.req.method === "GET") {
       console.log("users.ts, method:", event.node.req.method);
       return await prisma.user.findMany({
@@ -17,7 +20,6 @@ export default defineEventHandler(async (event) => {
           id: true,
           name: true,
           email: true,
-          password: true,
           role: true,
           trips: true,
           expenses: true,
@@ -51,7 +53,13 @@ export default defineEventHandler(async (event) => {
         },
       });
     }
+
+    throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
   } catch (error) {
-    `Http Method ${event.node.req.method} created Database operation error: ${error}`;
+    console.error(
+      `Http Method ${event.node.req.method} created Database operation error:`,
+      error
+    );
+    throw error;
   }
 });

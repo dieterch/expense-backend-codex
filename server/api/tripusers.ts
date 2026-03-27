@@ -1,7 +1,7 @@
 // server/api/tripusers.ts
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
-import users from "./users";
+import { requireTripAccess } from "../../utils/access-control";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
     );
 
     if (event.node.req.method === "POST") {
+      await requireTripAccess(prisma, event, body.id);
       return await prisma.tripUser.findMany({
         where: {
           tripId: body.id,
@@ -36,9 +37,11 @@ export default defineEventHandler(async (event) => {
         },
       });
     }
+
+    throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
   } catch (error) {
     console.error("Database operation error:", error);
-    return { error: "An error occurred during the request." };
+    throw error;
   }
 });
 

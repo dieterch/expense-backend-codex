@@ -1,6 +1,7 @@
 // server/api/trips.ts
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
+import { requireAdminUser, requireAuthenticatedUser, tripReadWhereForUser } from "../../utils/access-control";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "trips.ts");
@@ -10,9 +11,12 @@ export default defineEventHandler(async (event) => {
       return;
     }
 
+    const user = requireAuthenticatedUser(event);
+
     if (event.node.req.method === "GET") {
       console.log("trips.ts, method:", event.node.req.method);
       return await prisma.trip.findMany({
+        where: tripReadWhereForUser(user),
         select: {
           id: true,
           startDate: true,
@@ -37,6 +41,7 @@ export default defineEventHandler(async (event) => {
     console.log("trips.ts, body:", JSON.stringify(body,null,2), ", method:", event.node.req.method);
 
     if (event.node.req.method === "POST") {
+      requireAdminUser(event);
       try {
           return await prisma.trip.create({
           data: body,
@@ -61,6 +66,7 @@ export default defineEventHandler(async (event) => {
     // Update Trip - logic to prevent invalid operation in
     // the frontend code.
     if (event.node.req.method === "PUT") {
+      requireAdminUser(event);
       const updatedTrip = await prisma.trip.update({
         where: { id: body.id },
         data: {
@@ -99,13 +105,20 @@ export default defineEventHandler(async (event) => {
     }
 
     if (event.node.req.method === "DELETE") {
+      requireAdminUser(event);
       const trip = await prisma.trip.delete({
         where: {
           id: body.id,
         },
       });
     }
+
+    throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
   } catch (error) {
-    `Http Method ${event.node.req.method} created Database operation error: ${error}`;
+    console.error(
+      `Http Method ${event.node.req.method} created Database operation error:`,
+      error
+    );
+    throw error;
   }
 });
