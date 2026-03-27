@@ -2,11 +2,21 @@
 import { H3Event, sendError } from 'h3';
 import { jwtVerify } from 'jose';
 
-// Geheimschlüssel (oder öffentlicher Schlüssel bei RS256)
-// const SECRET = new TextEncoder().encode('dein-geheimer-schlüssel');
+const publicPaths = new Set(["/docs", "/openapi.yaml"]);
+
+function isTruthyRuntimeFlag(value: unknown) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+  }
+
+  return false;
+}
 
 export default defineEventHandler(async (event: H3Event) => {
-  
   if (event.node.req.method === "OPTIONS") {
     setResponseHeaders(event, {
       //'Access-Control-Allow-Origin': 'http://192.168.15.64:9000',
@@ -19,12 +29,21 @@ export default defineEventHandler(async (event: H3Event) => {
     return null; // Respond with no content
   }
 
-  const publicPaths = new Set(["/docs", "/openapi.yaml"]);
   if (publicPaths.has(getRequestURL(event).pathname)) {
     return;
   }
 
-  const SECRET = new TextEncoder().encode(useRuntimeConfig(event).jwtSecret);
+  const config = useRuntimeConfig(event);
+  if (isTruthyRuntimeFlag(config.devAuthBypass)) {
+    event.context.user = {
+      sub: "dev-mode",
+      role: "developer",
+      devAuthBypassed: true,
+    };
+    return;
+  }
+
+  const SECRET = new TextEncoder().encode(config.jwtSecret);
   
   const authHeader = getHeader(event, 'Authorization');
   
@@ -39,7 +58,6 @@ export default defineEventHandler(async (event: H3Event) => {
   try {
     // Überprüfe den Token
     const { payload } = await jwtVerify(token, SECRET);
-    console.log('*** authorized ***', payload)
     
     // Optional: Benutzerinformationen an die Anfrage anhängen
     event.context.user = payload;

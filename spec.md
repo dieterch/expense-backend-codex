@@ -61,6 +61,7 @@ Prisma reads DB connection from:
 
 JWT middleware reads secret from runtime config:
 - `jwtSecret` (Nitro runtime config; can be injected via env according to Nitro conventions)
+- `devAuthBypass` (set via `NITRO_DEV_AUTH_BYPASS=true` to bypass bearer auth in local development)
 
 > For production, configure secure non-default secrets.
 
@@ -136,6 +137,7 @@ File: `server/middleware/auth.global.ts`
 
 Behavior:
 - Handles `OPTIONS` requests with permissive CORS headers and returns early.
+- If `NITRO_DEV_AUTH_BYPASS=true`, skips bearer token validation and sets `event.context.user` to a synthetic developer payload.
 - For non-OPTIONS requests, expects header:
   - `Authorization: Bearer <token>`
 - Verifies token using HS256-compatible secret (`jwtSecret`) via `jose.jwtVerify`.
