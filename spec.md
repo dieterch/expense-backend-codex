@@ -4,6 +4,7 @@
 
 This project is a **Nitro-based backend API** for a trip expense-sharing application.
 It provides CRUD-style endpoints for users, trips, expenses, categories, and currencies, plus helper endpoints to fetch users/expenses for a specific trip.
+It also provides a login endpoint that returns JWTs for identified users.
 
 - Runtime: Nitro (`nitropack`)
 - ORM: Prisma
@@ -165,18 +166,32 @@ Base path uses Nitro file routing under `server/api`, so endpoints are available
 ### 6.1 `/api/users`
 File: `server/api/users.ts`
 
+- Requires admin privileges for all methods.
 - `GET`
   - Returns all users with:
-    - `id`, `name`, `email`, `password`, `role`, `trips`, `expenses`
+    - `id`, `name`, `email`, `role`, `trips`, `expenses`
 - `POST`
   - Creates user from request body
+  - Hashes plaintext password before storing it
 - `PUT`
   - Updates user by `body.id`
+  - Re-hashes password if a new plaintext password is supplied
 - `DELETE`
   - Deletes user by `body.id`
 
-Notes:
-- Password hash field is currently included in GET responses.
+### 6.1a `/api/auth/login`
+File: `server/api/auth/login.post.ts`
+
+- `POST`
+  - Public endpoint
+  - Expects:
+    ```json
+    { "email": "user@example.com", "password": "secret" }
+    ```
+  - Verifies credentials and returns:
+    - `token`
+    - safe `user` object (`id`, `email`, `name`, `role`)
+  - If the stored password is still plaintext from older data, successful login upgrades it to a bcrypt hash
 
 ---
 

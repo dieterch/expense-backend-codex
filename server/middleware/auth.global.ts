@@ -2,7 +2,7 @@
 import { H3Event, sendError } from 'h3';
 import { jwtVerify } from 'jose';
 
-const publicPaths = new Set(["/docs", "/openapi.yaml"]);
+const publicPaths = new Set(["/docs", "/openapi.yaml", "/api/auth/login"]);
 
 function isTruthyRuntimeFlag(value: unknown) {
   if (typeof value === "boolean") {

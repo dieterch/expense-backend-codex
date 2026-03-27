@@ -2,6 +2,7 @@
 import { doPreChecks } from "../../utils/precheck";
 import prisma from "../../prisma/client.js";
 import { requireAdminUser } from "../../utils/access-control";
+import { hashPassword } from "../../utils/password";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -32,17 +33,34 @@ export default defineEventHandler(async (event) => {
     console.log("users.ts, body:", body, ", method:", event.node.req.method);
 
     if (event.node.req.method === "POST") {
+      const createData = {
+        ...body,
+        email: typeof body.email === "string" ? body.email.trim().toLowerCase() : body.email,
+        password: await hashPassword(body.password),
+      };
+
       return await prisma.user.create({
-        data: body,
+        data: createData,
       });
     }
 
     if (event.node.req.method === "PUT") {
+      const updateData = {
+        ...body,
+        email: typeof body.email === "string" ? body.email.trim().toLowerCase() : body.email,
+      };
+
+      if (typeof body.password === "string" && body.password.length > 0) {
+        updateData.password = await hashPassword(body.password);
+      } else {
+        delete updateData.password;
+      }
+
       return await prisma.user.update({
         where: {
           id: body.id,
         },
-        data: body,
+        data: updateData,
       });
     }
 
