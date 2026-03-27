@@ -1,0 +1,738 @@
+openapi: 3.0.3
+info:
+  title: Expense Backend API
+  version: 1.0.0
+  description: |
+    OpenAPI documentation for the Nitro + Prisma expense-sharing backend.
+    
+    Notes:
+    - Authentication is handled by Bearer JWT middleware.
+    - Some endpoints use POST for filtered reads (e.g. /api/tripexpenses, /api/tripusers).
+servers:
+  - url: http://localhost:5678
+    description: Local development
+
+tags:
+  - name: Users
+  - name: Trips
+  - name: Expenses
+  - name: Trip Queries
+  - name: Categories
+  - name: Currency
+  - name: System
+
+security:
+  - BearerAuth: []
+
+paths:
+  /:
+    get:
+      tags: [System]
+      summary: Root route
+      description: Returns an access-prohibited message.
+      responses:
+        '200':
+          description: Plain text response
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: access prohibited
+
+  /api/users:
+    get:
+      tags: [Users]
+      summary: List users
+      responses:
+        '200':
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    post:
+      tags: [Users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateInput'
+      responses:
+        '200':
+          description: Created user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    put:
+      tags: [Users]
+      summary: Update user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateInput'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    delete:
+      tags: [Users]
+      summary: Delete user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: User deleted
+
+  /api/trips:
+    get:
+      tags: [Trips]
+      summary: List trips
+      responses:
+        '200':
+          description: Trips list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TripWithUsersAndExpenses'
+    post:
+      tags: [Trips]
+      summary: Create trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripCreateInput'
+      responses:
+        '200':
+          description: Created trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+    put:
+      tags: [Trips]
+      summary: Update trip and its user assignments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripUpdateInput'
+      responses:
+        '200':
+          description: Updated trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+    delete:
+      tags: [Trips]
+      summary: Delete trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Trip deleted
+
+  /api/expenses:
+    get:
+      tags: [Expenses]
+      summary: List expenses
+      responses:
+        '200':
+          description: Expenses list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseWithRelations'
+    post:
+      tags: [Expenses]
+      summary: Create expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseCreateInput'
+      responses:
+        '200':
+          description: Created expense
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+    put:
+      tags: [Expenses]
+      summary: Update expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseUpdateInput'
+      responses:
+        '200':
+          description: Updated expense
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Expense'
+    delete:
+      tags: [Expenses]
+      summary: Delete expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Expense deleted
+
+  /api/tripexpenses:
+    post:
+      tags: [Trip Queries]
+      summary: List expenses for a specific trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripIdInput'
+      responses:
+        '200':
+          description: Expenses for trip
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExpenseWithRelations'
+
+  /api/tripusers:
+    post:
+      tags: [Trip Queries]
+      summary: List users assigned to a specific trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripIdInput'
+      responses:
+        '200':
+          description: Users for trip
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TripUserSelection'
+
+  /api/categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      responses:
+        '200':
+          description: Categories list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryWithExpenses'
+    post:
+      tags: [Categories]
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreateInput'
+      responses:
+        '200':
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+    put:
+      tags: [Categories]
+      summary: Update category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdateInput'
+      responses:
+        '200':
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id]
+              properties:
+                id:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Category deleted
+
+  /api/currency:
+    get:
+      tags: [Currency]
+      summary: List currencies
+      responses:
+        '200':
+          description: Currency list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Currency'
+    post:
+      tags: [Currency]
+      summary: Create currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyCreateInput'
+      responses:
+        '200':
+          description: Created currency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currency'
+    put:
+      tags: [Currency]
+      summary: Update currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CurrencyUpdateInput'
+      responses:
+        '200':
+          description: Updated currency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Currency'
+    delete:
+      tags: [Currency]
+      summary: Delete currency
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Currency deleted
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        password:
+          type: string
+          description: Returned by current implementation; should typically be hidden.
+        role:
+          type: string
+        trips:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        expenses:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UserCreateInput:
+      type: object
+      required: [email, name, password, role]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+
+    UserUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/UserCreateInput'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TripUserInput:
+      type: object
+      required: [userId, tripId]
+      properties:
+        userId:
+          type: string
+          format: uuid
+        tripId:
+          type: string
+          format: uuid
+
+    TripCreateInput:
+      type: object
+      required: [name, startDate]
+      properties:
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    TripUpdateInput:
+      type: object
+      required: [id, name, startDate, users]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripUserInput'
+
+    UserBasic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+
+    TripUserSelection:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserBasic'
+
+    TripWithUsersAndExpenses:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripUserSelection'
+        expenses:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+
+    Expense:
+      type: object
+      required: [amount, currency, date, location, tripId, userId, categoryId]
+      properties:
+        id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+        date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        description:
+          type: string
+          nullable: true
+        tripId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ExpenseCreateInput:
+      type: object
+      required: [amount, currency, date, location, tripId, userId, categoryId]
+      properties:
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          description: Must match Currency.name
+        date:
+          type: string
+          format: date-time
+        location:
+          type: string
+        description:
+          type: string
+          nullable: true
+        tripId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        categoryId:
+          type: string
+          format: uuid
+
+    ExpenseUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/ExpenseCreateInput'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    ExpenseWithRelations:
+      allOf:
+        - $ref: '#/components/schemas/Expense'
+        - type: object
+          properties:
+            trip:
+              $ref: '#/components/schemas/Trip'
+            user:
+              $ref: '#/components/schemas/UserBasic'
+            category:
+              $ref: '#/components/schemas/Category'
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        icon:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CategoryCreateInput:
+      type: object
+      required: [name, icon]
+      properties:
+        name:
+          type: string
+        icon:
+          type: string
+
+    CategoryUpdateInput:
+      allOf:
+        - $ref: '#/components/schemas/CategoryCreateInput'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              format: uuid
+
+    CategoryWithExpenses:
+      allOf:
+        - $ref: '#/components/schemas/Category'
+        - type: object
+          properties:
+            expenses:
+              type: array
+              items:
+                type: object
+                additionalProperties: true
+
+    Currency:
+      type: object
+      properties:
+        name:
+          type: string
+        symbol:
+          type: string
+        factor:
+          type: number
+          format: float
+
+    CurrencyCreateInput:
+      type: object
+      required: [name, symbol, factor]
+      properties:
+        name:
+          type: string
+        symbol:
+          type: string
+        factor:
+          type: number
+          format: float
+
+    CurrencyUpdateInput:
+      type: object
+      required: [name, symbol, factor]
+      properties:
+        name:
+          type: string
+        symbol:
+          type: string
+        factor:
+          type: number
+          format: float
+
+    TripIdInput:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid

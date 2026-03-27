@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+datasource db {
+  provider = "sqlite" // Oder eine andere DB wie MySQL, SQLite, etc.
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String      @id @default(uuid())
+  email     String      @unique
+  name      String
+  password  String
+  role      String
+  trips     TripUser[] // Beziehung zu den Trips
+  expenses  Expense[] // Ausgaben des Nutzers
+  shares    TripShare[] // Anteil an den Gesamtkosten pro Trip
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Trip {
+  id        String      @id @default(uuid())
+  name      String      @unique
+  startDate DateTime
+  endDate   DateTime?
+  users     TripUser[] // Teilnehmer des Trips
+  expenses  Expense[] // Ausgaben des Trips
+  shares    TripShare[] // Aufteilung der Trip-Gesamtkosten
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model TripUser {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade) // Bezug zur User-Tabelle
+  userId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade) // Bezug zur Trip-Tabelle
+  tripId String
+
+  @@unique([userId, tripId])
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  amount      Float
+  currency    String   // bleibt als String (Speichert den Namen) und dient als FK
+  date        DateTime
+  location    String
+  description String?
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  String
+  // Relation zur Currency über das Feld `currency` (referenziert Currency.name)
+  currencyRef Currency @relation(fields: [currency], references: [name], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TripShare {
+  id         String @id @default(uuid())
+  percentage Float // Der prozentuale Anteil an den Trip-Ausgaben
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade) // Bezug zum User
+  userId     String
+  trip       Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade) // Bezug zum Trip
+  tripId     String
+
+  @@unique([userId, tripId]) // Sicherstellen, dass jeder User pro Trip nur einen Anteil hat
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  icon      String
+  expenses  Expense[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Currency {
+  // name entspricht dem bisherigen `currency`-Feld in Expense
+  name    String    @id
+  symbol  String
+  factor  Float
+  expenses Expense[] // Gegen-Relation zur Expense.currencyRef
+}
