@@ -6,6 +6,12 @@ Nitro + Prisma backend for the trip expense-sharing app.
 
 The API uses Bearer JWT auth by default.
 
+Create a local env file from the tracked template:
+
+```bash
+cp .env.example .env
+```
+
 For local-only development, you can bypass Bearer auth by setting this in [.env](/home/developer/projects/expense-backend-codex/.env):
 
 ```dotenv
