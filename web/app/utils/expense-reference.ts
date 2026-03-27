@@ -5,6 +5,9 @@ export type ExpenseReferenceLike = {
   referenceRate?: number | null;
   referenceRateDate?: string | null;
   referenceRateProvider?: string | null;
+  manualReferenceEurAmount?: number | null;
+  manualRate?: number | null;
+  manualRateProvider?: string | null;
 };
 
 export function getExpenseDisplayAmount(expense: ExpenseReferenceLike) {
@@ -12,12 +15,36 @@ export function getExpenseDisplayAmount(expense: ExpenseReferenceLike) {
     return expense.amount;
   }
 
-  return typeof expense.referenceEurAmount === "number" ? expense.referenceEurAmount : expense.amount;
+  if (typeof expense.referenceEurAmount === "number") {
+    return expense.referenceEurAmount;
+  }
+
+  if (typeof expense.manualReferenceEurAmount === "number") {
+    return expense.manualReferenceEurAmount;
+  }
+
+  return expense.amount;
 }
 
 export function buildExpenseReferenceSummary(expense: ExpenseReferenceLike) {
   if (expense.currency === "EUR") {
     return null;
+  }
+
+  if (
+    typeof expense.manualReferenceEurAmount === "number" &&
+    typeof expense.manualRate === "number" &&
+    Number.isFinite(expense.manualRate) &&
+    expense.manualRate > 0
+  ) {
+    const provider = expense.manualRateProvider || "Configured manual exchange rate";
+
+    return {
+      headline: "Reference rate missing, using manual exchange rate",
+      detail:
+        `${provider} · Manual EUR ${expense.manualReferenceEurAmount.toFixed(2)} · ` +
+        `1 ${expense.currency} = ${expense.manualRate.toFixed(4)} EUR`,
+    };
   }
 
   if (

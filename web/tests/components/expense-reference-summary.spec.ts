@@ -39,4 +39,25 @@ describe("expense reference summary", () => {
 
     expect(wrapper.text()).toBe("");
   });
+
+  it("falls back to the configured manual exchange rate when the historical reference is missing", async () => {
+    const wrapper = await mountSuspended(ExpenseReferenceSummary, {
+      props: {
+        amount: 135,
+        currency: "GBP",
+        manualReferenceEurAmount: 157.95,
+        manualRate: 1.17,
+        manualRateProvider: "Configured manual exchange rate",
+        estimatedTotalEurAmount: 160.22,
+        estimatedBankMarkupBps: 75,
+        estimatedFixedFeeCents: 109,
+      },
+    });
+
+    expect(wrapper.text()).toContain("Reference rate missing, using manual exchange rate");
+    expect(wrapper.text()).toContain("Configured manual exchange rate");
+    expect(wrapper.text()).toContain("Manual EUR 157.95");
+    expect(wrapper.text()).toContain("1 GBP = 1.1700 EUR");
+    expect(wrapper.text()).toContain("Estimated EUR 160.22");
+  });
 });

@@ -50,6 +50,12 @@ type Expense = {
   category?: { id: string; name: string; icon: string };
 };
 
+type ExpenseDisplay = Expense & {
+  manualReferenceEurAmount?: number | null;
+  manualRate?: number | null;
+  manualRateProvider?: string | null;
+};
+
 type Category = {
   id: string;
   name: string;
@@ -322,17 +328,55 @@ function resetEstimationSettings() {
 }
 
 function getExpenseEstimate(expense: Expense) {
-  return estimateExpenseEur(expense, estimationSettingsState.settings.value);
+  return estimateExpenseEur(getDisplayExpense(expense), estimationSettingsState.settings.value);
+}
+
+function getCurrencyManualRate(currencyCode: string) {
+  const currency = currencies.value.find((entry) => entry.name === currencyCode);
+
+  if (!currency || !Number.isFinite(currency.factor) || currency.factor <= 0) {
+    return null;
+  }
+
+  return currency.factor;
+}
+
+function getDisplayExpense(expense: Expense): ExpenseDisplay {
+  if (expense.currency === "EUR") {
+    return expense;
+  }
+
+  if (
+    typeof expense.referenceEurAmount === "number" &&
+    typeof expense.referenceRate === "number" &&
+    !!expense.referenceRateDate
+  ) {
+    return expense;
+  }
+
+  const manualRate = getCurrencyManualRate(expense.currency);
+
+  if (typeof manualRate !== "number") {
+    return expense;
+  }
+
+  return {
+    ...expense,
+    manualRate,
+    manualRateProvider: "Configured manual exchange rate",
+    manualReferenceEurAmount: expense.amount * manualRate,
+  };
 }
 
 const sortedExpenses = computed(() =>
   [...expenses.value].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
 );
+const displayExpenses = computed(() => sortedExpenses.value.map((expense) => getDisplayExpense(expense)));
 
-const stats = computed(() => calculateTripStats(sortedExpenses.value, trip.value?.startDate));
+const stats = computed(() => calculateTripStats(displayExpenses.value, trip.value?.startDate));
 const totalAmount = computed(() => stats.value.totalAmount.toFixed(2));
 const estimatedTripTotal = computed(() =>
-  estimateTripTotal(sortedExpenses.value, estimationSettingsState.settings.value).toFixed(2),
+  estimateTripTotal(displayExpenses.value, estimationSettingsState.settings.value).toFixed(2),
 );
 const hasForeignCurrencyExpenses = computed(() => sortedExpenses.value.some((expense) => expense.currency !== "EUR"));
 const canEstimateForeignCurrency = computed(() => currencies.value.some((currency) => currency.name !== "EUR"));
@@ -467,7 +511,7 @@ onMounted(loadTrip);
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="expense in sortedExpenses" :key="expense.id">
+                <tr v-for="expense in displayExpenses" :key="expense.id">
                   <td>
                     <div class="font-weight-medium">{{ expense.description || "Expense" }}</div>
                     <div class="text-caption text-medium-emphasis">
@@ -495,6 +539,9 @@ onMounted(loadTrip);
                       :reference-rate="expense.referenceRate"
                       :reference-rate-date="expense.referenceRateDate"
                       :reference-rate-provider="expense.referenceRateProvider"
+                      :manual-reference-eur-amount="expense.manualReferenceEurAmount"
+                      :manual-rate="expense.manualRate"
+                      :manual-rate-provider="expense.manualRateProvider"
                       :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
                       :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
                       :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"
@@ -530,7 +577,7 @@ onMounted(loadTrip);
 
           <div class="d-md-none mobile-stack">
             <v-card
-              v-for="expense in sortedExpenses"
+              v-for="expense in displayExpenses"
               :key="expense.id"
               color="background"
               class="record-card pa-4"
@@ -575,6 +622,9 @@ onMounted(loadTrip);
                 :reference-rate="expense.referenceRate"
                 :reference-rate-date="expense.referenceRateDate"
                 :reference-rate-provider="expense.referenceRateProvider"
+                :manual-reference-eur-amount="expense.manualReferenceEurAmount"
+                :manual-rate="expense.manualRate"
+                :manual-rate-provider="expense.manualRateProvider"
                 :estimated-total-eur-amount="getExpenseEstimate(expense).estimatedTotalEurAmount"
                 :estimated-bank-markup-bps="getExpenseEstimate(expense).estimatedBankMarkupBps"
                 :estimated-fixed-fee-cents="getExpenseEstimate(expense).estimatedFixedFeeCents"

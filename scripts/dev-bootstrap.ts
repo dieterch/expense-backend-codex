@@ -13,7 +13,7 @@ const defaults = {
   memberName: process.env.DEV_BOOTSTRAP_MEMBER_NAME ?? "Developer Member",
   tripName: process.env.DEV_BOOTSTRAP_TRIP_NAME ?? "Codex Demo Trip",
   categoryName: process.env.DEV_BOOTSTRAP_CATEGORY_NAME ?? "Meals",
-  categoryIcon: process.env.DEV_BOOTSTRAP_CATEGORY_ICON ?? "silverware-fork-knife",
+  categoryIcon: process.env.DEV_BOOTSTRAP_CATEGORY_ICON ?? "mdi-silverware-fork-knife",
   currencyName: process.env.DEV_BOOTSTRAP_CURRENCY_NAME ?? "EUR",
   currencySymbol: process.env.DEV_BOOTSTRAP_CURRENCY_SYMBOL ?? "EUR",
 };

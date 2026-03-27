@@ -8,6 +8,9 @@ const props = defineProps<{
   referenceRate?: number | null;
   referenceRateDate?: string | null;
   referenceRateProvider?: string | null;
+  manualReferenceEurAmount?: number | null;
+  manualRate?: number | null;
+  manualRateProvider?: string | null;
   estimatedTotalEurAmount?: number | null;
   estimatedBankMarkupBps?: number | null;
   estimatedFixedFeeCents?: number | null;
