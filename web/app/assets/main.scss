@@ -1,0 +1,48 @@
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#__nuxt {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(217, 95, 67, 0.18), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(23, 49, 62, 0.16), transparent 30%),
+    linear-gradient(180deg, #f8f3ea 0%, #f2ece0 100%);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.grain-overlay {
+  position: relative;
+}
+
+.grain-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.6) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.page-wrap {
+  width: min(1120px, calc(100vw - 32px));
+  margin: 0 auto;
+}
+
+.page-title {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

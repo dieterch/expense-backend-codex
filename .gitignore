@@ -4,6 +4,7 @@ node_modules
 .env.*
 !.env.example
 .nitro/
+.nuxt/
 .output/
 .tmp-tests/
 prisma/dev.db
