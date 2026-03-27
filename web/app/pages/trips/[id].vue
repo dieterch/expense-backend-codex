@@ -4,7 +4,9 @@ definePageMeta({
 });
 
 import ExpenseEditorDialog from "~/components/trip/ExpenseEditorDialog.vue";
+import ExpenseReferenceSummary from "~/components/trip/ExpenseReferenceSummary.vue";
 import TripStatsDialog from "~/components/trip/TripStatsDialog.vue";
+import { getExpenseDisplayAmount } from "~/utils/expense-reference";
 import { calculateTripStats } from "~/utils/trip-stats";
 
 type Trip = {
@@ -28,6 +30,11 @@ type Expense = {
   amount: number;
   amountCents: number;
   currency: string;
+  referenceRate?: number | null;
+  referenceRateProvider?: string | null;
+  referenceRateDate?: string | null;
+  referenceEurAmount?: number | null;
+  referenceEurAmountCents?: number | null;
   date: string;
   location: string;
   description?: string | null;
@@ -95,7 +102,7 @@ async function loadTrip() {
     participants.value = participantsData;
     expenses.value = expensesData;
     categories.value = categoriesData;
-    currencies.value = currenciesData;
+    currencies.value = [...currenciesData].sort((left, right) => left.name.localeCompare(right.name));
 
     if (!trip.value) {
       throw new Error("Trip not found");
@@ -249,6 +256,7 @@ const sortedExpenses = computed(() =>
 
 const stats = computed(() => calculateTripStats(sortedExpenses.value, trip.value?.startDate));
 const totalAmount = computed(() => stats.value.totalAmount.toFixed(2));
+const hasForeignCurrencyExpenses = computed(() => sortedExpenses.value.some((expense) => expense.currency !== "EUR"));
 
 onMounted(loadTrip);
 </script>
@@ -291,7 +299,9 @@ onMounted(loadTrip);
                   </div>
                 </div>
                 <v-sheet color="primary" rounded="xl" class="pa-4 text-white">
-                  <div class="text-caption text-uppercase mb-1">Tracked total</div>
+                  <div class="text-caption text-uppercase mb-1">
+                    {{ hasForeignCurrencyExpenses ? "Tracked total (EUR ref)" : "Tracked total" }}
+                  </div>
                   <div class="text-h4">€ {{ totalAmount }}</div>
                 </v-sheet>
               </div>
@@ -360,6 +370,7 @@ onMounted(loadTrip);
                 <th>Category</th>
                 <th>Location</th>
                 <th class="text-right">Amount</th>
+                <th class="text-right">EUR view</th>
                 <th class="text-right">Actions</th>
               </tr>
             </thead>
@@ -377,6 +388,17 @@ onMounted(loadTrip);
                 <td class="text-right">
                   <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
                   <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
+                </td>
+                <td class="text-right">
+                  <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
+                  <ExpenseReferenceSummary
+                    :amount="expense.amount"
+                    :currency="expense.currency"
+                    :reference-eur-amount="expense.referenceEurAmount"
+                    :reference-rate="expense.referenceRate"
+                    :reference-rate-date="expense.referenceRateDate"
+                    :reference-rate-provider="expense.referenceRateProvider"
+                  />
                 </td>
                 <td class="text-right">
                   <div v-if="canManageExpense(expense)" class="d-inline-flex ga-2">

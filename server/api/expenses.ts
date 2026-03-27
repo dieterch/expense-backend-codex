@@ -16,7 +16,8 @@ import {
   requireString,
   requireUuidLikeId,
 } from "../../utils/request-validation";
-import { amountToCents, normalizeExpenseMoney } from "../../utils/money";
+import { amountToCents, normalizeExpenseRecord } from "../../utils/money";
+import { resolveExpenseReferenceExchange } from "../../utils/reference-exchange";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
         },
       });
 
-      return expenses.map(normalizeExpenseMoney);
+      return expenses.map(normalizeExpenseRecord);
     }
 
     const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody
@@ -51,6 +52,11 @@ export default defineEventHandler(async (event) => {
         tripId: requireUuidLikeId(body.tripId, "tripId"),
         userId: requireUuidLikeId(body.userId, "userId"),
         categoryId: requireUuidLikeId(body.categoryId, "categoryId"),
+        ...(await resolveExpenseReferenceExchange({
+          amount,
+          currency: requireString(body.currency, "currency"),
+          date: requireDate(body.date, "date"),
+        })),
       };
 
       await requireExpenseCreateAccess(prisma, event, createData.tripId, createData.userId);
@@ -58,7 +64,7 @@ export default defineEventHandler(async (event) => {
         data: createData,
       });
 
-      return normalizeExpenseMoney(expense);
+      return normalizeExpenseRecord(expense);
     }
 
     if (event.node.req.method === "PUT") {
@@ -75,6 +81,11 @@ export default defineEventHandler(async (event) => {
         userId: requireUuidLikeId(body.userId, "userId"),
         tripId: requireUuidLikeId(body.tripId, "tripId"),
         categoryId: requireUuidLikeId(body.categoryId, "categoryId"),
+        ...(await resolveExpenseReferenceExchange({
+          amount,
+          currency: requireString(body.currency, "currency"),
+          date: requireDate(body.date, "date"),
+        })),
       };
 
       if (!isAdminUser(access.user)) {
@@ -89,7 +100,7 @@ export default defineEventHandler(async (event) => {
         data: updateData,
       });
 
-      return normalizeExpenseMoney(expense);
+      return normalizeExpenseRecord(expense);
     }
 
     if (event.node.req.method === "DELETE") {

@@ -24,3 +24,33 @@ export function normalizeExpenseMoney<T extends { amount: number; amountCents?: 
     amountCents,
   };
 }
+
+export function normalizeExpenseReference<T extends {
+  referenceEurAmountCents?: number | null;
+  referenceRate?: number | null;
+  referenceRateDate?: string | null;
+  referenceRateProvider?: string | null;
+}>(expense: T) {
+  const referenceEurAmountCents =
+    typeof expense.referenceEurAmountCents === "number" ? expense.referenceEurAmountCents : null;
+
+  return {
+    ...expense,
+    referenceEurAmountCents,
+    referenceEurAmount: typeof referenceEurAmountCents === "number" ? centsToAmount(referenceEurAmountCents) : null,
+    referenceRate: typeof expense.referenceRate === "number" ? expense.referenceRate : null,
+    referenceRateDate: expense.referenceRateDate || null,
+    referenceRateProvider: expense.referenceRateProvider || null,
+  };
+}
+
+export function normalizeExpenseRecord<T extends {
+  amount: number;
+  amountCents?: number | null;
+  referenceEurAmountCents?: number | null;
+  referenceRate?: number | null;
+  referenceRateDate?: string | null;
+  referenceRateProvider?: string | null;
+}>(expense: T) {
+  return normalizeExpenseReference(normalizeExpenseMoney(expense));
+}

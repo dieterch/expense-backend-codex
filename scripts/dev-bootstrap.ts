@@ -92,6 +92,22 @@ async function main() {
     },
   });
 
+  const usdCurrency = await prisma.currency.upsert({
+    where: { name: "USD" },
+    create: {
+      name: "USD",
+      symbol: "$",
+      factor: 1.08,
+    },
+    update: {
+      symbol: "$",
+      factor: 1.08,
+    },
+    select: {
+      name: true,
+    },
+  });
+
   const trip = await prisma.trip.upsert({
     where: { name: defaults.tripName },
     create: {
@@ -143,6 +159,7 @@ async function main() {
   console.log(`- Trip: ${trip.name}`);
   console.log(`- Category: ${category.name}`);
   console.log(`- Currency: ${currency.name}`);
+  console.log(`- Currency: ${usdCurrency.name}`);
   console.log("");
   console.log("Optional env overrides:");
   console.log("- DEV_BOOTSTRAP_ADMIN_EMAIL");

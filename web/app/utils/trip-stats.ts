@@ -1,19 +1,22 @@
+import { getExpenseDisplayAmount } from "./expense-reference";
+
 export type TripExpenseStatsItem = {
   id: string;
   amount: number;
   date: string;
   currency: string;
+  referenceEurAmount?: number | null;
   category?: { name: string } | null;
   user?: { id: string; name: string } | null;
 };
 
 export function calculateTripStats(expenses: TripExpenseStatsItem[], startDate?: string | null) {
-  const totalAmount = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalAmount = expenses.reduce((sum, expense) => sum + getExpenseDisplayAmount(expense), 0);
   const uniquePayers = new Set(expenses.map((expense) => expense.user?.id).filter(Boolean)).size;
 
   const categoryTotals = expenses.reduce<Record<string, number>>((totals, expense) => {
     const key = expense.category?.name || "Uncategorized";
-    totals[key] = (totals[key] || 0) + expense.amount;
+    totals[key] = (totals[key] || 0) + getExpenseDisplayAmount(expense);
     return totals;
   }, {});
 

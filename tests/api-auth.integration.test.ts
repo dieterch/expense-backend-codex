@@ -1,6 +1,7 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { copyFile, mkdir, mkdtemp, rm } from "node:fs/promises";
+import { createServer } from "node:http";
 import { join, resolve } from "node:path";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
@@ -12,7 +13,9 @@ const execFileAsync = promisify(execFile);
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 const repoDir = process.cwd();
 const port = 5689;
+const referenceRatePort = 5690;
 const baseUrl = `http://127.0.0.1:${port}`;
+const referenceRateBaseUrl = `http://127.0.0.1:${referenceRatePort}/v1`;
 const jwtSecret = "integration-test-secret";
 const baseDatabasePath = resolve(repoDir, "prisma/dev.db");
 
@@ -20,6 +23,7 @@ let tempDir = "";
 let databaseUrl = "";
 let prisma: PrismaClient;
 let serverProcess: ReturnType<typeof spawn> | null = null;
+let referenceRateServer: ReturnType<typeof createServer> | null = null;
 
 async function stopServer(processToStop: ReturnType<typeof spawn>) {
   if (processToStop.exitCode !== null || processToStop.signalCode !== null) {
@@ -163,6 +167,14 @@ before(async () => {
     },
   });
 
+  await prisma.currency.create({
+    data: {
+      name: "USD",
+      symbol: "$",
+      factor: 1.08,
+    },
+  });
+
   await prisma.expense.create({
     data: {
       amount: 18.5,
@@ -175,6 +187,32 @@ before(async () => {
       userId: otherUser.id,
       categoryId: category.id,
     },
+  });
+
+  referenceRateServer = createServer((request, response) => {
+    const url = new URL(request.url || "/", referenceRateBaseUrl);
+    const base = url.searchParams.get("base");
+    const symbols = url.searchParams.get("symbols");
+
+    if (request.method !== "GET" || !url.pathname.startsWith("/v1/") || base !== "USD" || symbols !== "EUR") {
+      response.writeHead(404, { "content-type": "application/json" });
+      response.end(JSON.stringify({ error: "not found" }));
+      return;
+    }
+
+    response.writeHead(200, { "content-type": "application/json" });
+    response.end(JSON.stringify({
+      base: "USD",
+      date: "2025-02-28",
+      rates: {
+        EUR: 0.91,
+      },
+    }));
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    referenceRateServer?.listen(referenceRatePort, "127.0.0.1", () => resolve());
+    referenceRateServer?.once("error", reject);
   });
 
   await execFileAsync(npmCommand, ["run", "build"], { cwd: repoDir });
@@ -190,6 +228,7 @@ before(async () => {
       HOST: "127.0.0.1",
       NITRO_HOST: "127.0.0.1",
       NITRO_DEV_AUTH_BYPASS: "false",
+      NITRO_REFERENCE_RATE_API_BASE: referenceRateBaseUrl,
     },
     stdio: "ignore",
   });
@@ -200,6 +239,10 @@ before(async () => {
 after(async () => {
   if (serverProcess) {
     await stopServer(serverProcess);
+  }
+
+  if (referenceRateServer) {
+    await new Promise((resolve) => referenceRateServer?.close(resolve));
   }
 
   if (prisma) {
@@ -451,6 +494,95 @@ test("expense writes and reads expose synced amount and amountCents", async () =
   assert.ok(expense);
   assert.equal(expense.amount, 12.34);
   assert.equal(expense.amountCents, 1234);
+});
+
+test("foreign-currency expenses persist historical EUR reference conversion", async () => {
+  const loginResponse = await fetch(`${baseUrl}/api/v1/auth/login`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const member = await prisma.user.findUniqueOrThrow({
+    where: { email: "member@example.com" },
+    select: { id: true },
+  });
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { name: "Integration Trip" },
+    select: { id: true },
+  });
+  const category = await prisma.category.findUniqueOrThrow({
+    where: { name: "Meals" },
+    select: { id: true },
+  });
+
+  const createResponse = await fetch(`${baseUrl}/api/v1/expenses`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: 10,
+      currency: "USD",
+      date: "2025-03-02T12:00:00.000Z",
+      location: "New York",
+      description: "Museum ticket",
+      tripId: trip.id,
+      userId: member.id,
+      categoryId: category.id,
+    }),
+  });
+
+  assert.equal(createResponse.status, 200);
+  const createdExpense = await createResponse.json();
+  assert.equal(createdExpense.referenceRate, 0.91);
+  assert.equal(createdExpense.referenceRateProvider, "Frankfurter");
+  assert.equal(createdExpense.referenceRateDate, "2025-02-28");
+  assert.equal(createdExpense.referenceEurAmountCents, 910);
+  assert.equal(createdExpense.referenceEurAmount, 9.1);
+
+  const storedExpense = await prisma.expense.findUniqueOrThrow({
+    where: {
+      id: createdExpense.id,
+    },
+    select: {
+      referenceRate: true,
+      referenceRateProvider: true,
+      referenceRateDate: true,
+      referenceEurAmountCents: true,
+    },
+  });
+
+  assert.equal(storedExpense.referenceRate, 0.91);
+  assert.equal(storedExpense.referenceRateProvider, "Frankfurter");
+  assert.equal(storedExpense.referenceRateDate, "2025-02-28");
+  assert.equal(storedExpense.referenceEurAmountCents, 910);
+
+  const listResponse = await fetch(`${baseUrl}/api/v1/expenses`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  assert.equal(listResponse.status, 200);
+  const expenses = await listResponse.json();
+  const expense = expenses.find((item: any) => item.id === createdExpense.id);
+
+  assert.ok(expense);
+  assert.equal(expense.referenceRate, 0.91);
+  assert.equal(expense.referenceRateProvider, "Frankfurter");
+  assert.equal(expense.referenceRateDate, "2025-02-28");
+  assert.equal(expense.referenceEurAmountCents, 910);
+  assert.equal(expense.referenceEurAmount, 9.1);
 });
 
 test("regular users cannot create expenses in trips they do not belong to", async () => {

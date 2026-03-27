@@ -15,8 +15,9 @@ describe("calculateTripStats", () => {
       {
         id: "expense-2",
         amount: 20,
+        referenceEurAmount: 18,
         date: "2026-03-12T12:00:00.000Z",
-        currency: "EUR",
+        currency: "USD",
         category: { name: "Transport" },
         user: { id: "user-2", name: "Dev Friend" },
       },
@@ -30,14 +31,14 @@ describe("calculateTripStats", () => {
       },
     ], "2026-03-10T08:00:00.000Z");
 
-    expect(stats.totalAmount).toBe(40);
+    expect(stats.totalAmount).toBe(38);
     expect(stats.expenseCount).toBe(3);
     expect(stats.uniquePayers).toBe(2);
     expect(stats.durationDays).toBe(3);
-    expect(stats.averagePerDay).toBeCloseTo(13.33, 2);
+    expect(stats.averagePerDay).toBeCloseTo(12.67, 2);
     expect(stats.categoryBreakdown).toEqual([
       { category: "Meals", amount: 20 },
-      { category: "Transport", amount: 20 },
+      { category: "Transport", amount: 18 },
     ]);
   });
 });

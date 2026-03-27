@@ -19,11 +19,15 @@ test("member can create, edit, delete, and sign back out", async ({ page }) => {
 
   await page.getByRole("button", { name: "Add expense" }).click();
   await page.getByLabel("Amount").fill("19.75");
+  await page.getByRole("combobox", { name: "Currency" }).focus();
+  await page.keyboard.press("ArrowDown");
+  await page.getByRole("option", { name: "USD" }).click();
   await page.getByLabel("Location").fill("Vienna");
   await page.getByLabel("Description").fill(expenseName);
   await page.getByRole("button", { name: "Create expense" }).click();
 
   await expect(page.getByText(expenseName)).toBeVisible();
+  await expect(page.getByText("Reference EUR")).toBeVisible();
 
   const expenseRow = page.locator("tr", { hasText: expenseName });
   await expenseRow.getByRole("button", { name: "Edit" }).click();

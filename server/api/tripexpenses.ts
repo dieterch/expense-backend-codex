@@ -3,7 +3,7 @@ import prisma from "../../prisma/client.js";
 import { requireTripAccess } from "../../utils/access-control";
 import { normalizeRouteError } from "../../utils/route-error";
 import { ensureObjectBody, requireUuidLikeId } from "../../utils/request-validation";
-import { normalizeExpenseMoney } from "../../utils/money";
+import { normalizeExpenseRecord } from "../../utils/money";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
         },
       });
 
-      return expenses.map(normalizeExpenseMoney);
+      return expenses.map(normalizeExpenseRecord);
     }
 
     throw createError({ statusCode: 405, statusMessage: "Method not allowed" });

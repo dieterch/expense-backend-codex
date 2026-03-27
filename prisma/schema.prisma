@@ -49,19 +49,23 @@ model TripUser {
 }
 
 model Expense {
-  id          String   @id @default(uuid())
-  amount      Float
-  amountCents Int?
-  currency    String   // bleibt als String (Speichert den Namen) und dient als FK
-  date        DateTime
-  location    String
-  description String?
-  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  tripId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  categoryId  String
+  id                     String   @id @default(uuid())
+  amount                 Float
+  amountCents            Int?
+  currency               String   // bleibt als String (Speichert den Namen) und dient als FK
+  referenceRate          Float?
+  referenceRateProvider  String?
+  referenceRateDate      String?
+  referenceEurAmountCents Int?
+  date                   DateTime
+  location               String
+  description            String?
+  trip                   Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                 String
+  category               Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId             String
   // Relation zur Currency über das Feld `currency` (referenziert Currency.name)
   currencyRef Currency @relation(fields: [currency], references: [name], onDelete: Cascade)
   createdAt   DateTime @default(now())
