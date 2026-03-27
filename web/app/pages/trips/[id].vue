@@ -497,7 +497,7 @@ onMounted(loadTrip);
             </v-chip>
           </div>
 
-          <div class="d-none d-md-block table-shell">
+          <div class="desktop-table-only table-shell">
             <v-table>
               <thead>
                 <tr>
@@ -575,7 +575,7 @@ onMounted(loadTrip);
             </v-table>
           </div>
 
-          <div class="d-md-none mobile-stack">
+          <div class="mobile-cards-only mobile-stack">
             <v-card
               v-for="expense in displayExpenses"
               :key="expense.id"

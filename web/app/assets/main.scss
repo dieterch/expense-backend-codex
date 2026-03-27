@@ -76,6 +76,14 @@ body {
   gap: 16px;
 }
 
+.desktop-table-only {
+  display: block;
+}
+
+.mobile-cards-only {
+  display: none;
+}
+
 .record-card {
   border: 1px solid rgba(23, 49, 62, 0.08);
 }
@@ -97,6 +105,14 @@ body {
 
   .page-wrap {
     width: min(100vw - 24px, 1120px);
+  }
+
+  .desktop-table-only {
+    display: none;
+  }
+
+  .mobile-cards-only {
+    display: grid;
   }
 }
 

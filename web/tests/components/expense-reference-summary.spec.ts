@@ -20,10 +20,7 @@ describe("expense reference summary", () => {
       },
     });
 
-    expect(wrapper.text()).toContain("Reference EUR 9.10");
-    expect(wrapper.text()).toContain("Frankfurter");
-    expect(wrapper.text()).toContain("2025-02-28");
-    expect(wrapper.text()).toContain("1 USD = 0.9100 EUR");
+    expect(wrapper.text()).toContain("Frankfurter exchange rate (USD 0.9100 EUR)");
     expect(wrapper.text()).toContain("Estimated EUR 9.58");
     expect(wrapper.text()).toContain("markup 2.50%");
     expect(wrapper.text()).toContain("fee EUR 0.25");
@@ -54,10 +51,7 @@ describe("expense reference summary", () => {
       },
     });
 
-    expect(wrapper.text()).toContain("Reference rate missing, using manual exchange rate");
-    expect(wrapper.text()).toContain("Configured manual exchange rate");
-    expect(wrapper.text()).toContain("Manual EUR 157.95");
-    expect(wrapper.text()).toContain("1 GBP = 1.1700 EUR");
+    expect(wrapper.text()).toContain("Configured manual exchange rate (GBP 1.1700 EUR)");
     expect(wrapper.text()).toContain("Estimated EUR 160.22");
   });
 });

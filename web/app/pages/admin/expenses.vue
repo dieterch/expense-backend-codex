@@ -209,7 +209,7 @@ onMounted(loadExpenses);
         <v-skeleton-loader v-if="loading" type="table-heading, table-tbody" />
 
         <template v-else>
-          <div class="d-none d-md-block table-shell">
+          <div class="desktop-table-only table-shell">
             <v-table>
               <thead>
                 <tr>
@@ -247,7 +247,7 @@ onMounted(loadExpenses);
             </v-table>
           </div>
 
-          <div class="d-md-none mobile-stack">
+          <div class="mobile-cards-only mobile-stack">
             <v-card
               v-for="expense in filteredExpenses"
               :key="expense.id"

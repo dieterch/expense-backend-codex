@@ -22,7 +22,7 @@ const summary = computed(() => buildExpenseReferenceSummary(props));
 <template>
   <template v-if="summary">
     <div class="text-caption text-medium-emphasis">{{ summary.headline }}</div>
-    <div class="text-caption text-medium-emphasis">{{ summary.detail }}</div>
+    <div v-if="summary.detail" class="text-caption text-medium-emphasis">{{ summary.detail }}</div>
     <div
       v-if="typeof estimatedTotalEurAmount === 'number' && typeof estimatedBankMarkupBps === 'number'"
       class="text-caption text-medium-emphasis"

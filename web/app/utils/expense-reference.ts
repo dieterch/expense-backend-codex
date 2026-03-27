@@ -40,10 +40,8 @@ export function buildExpenseReferenceSummary(expense: ExpenseReferenceLike) {
     const provider = expense.manualRateProvider || "Configured manual exchange rate";
 
     return {
-      headline: "Reference rate missing, using manual exchange rate",
-      detail:
-        `${provider} · Manual EUR ${expense.manualReferenceEurAmount.toFixed(2)} · ` +
-        `1 ${expense.currency} = ${expense.manualRate.toFixed(4)} EUR`,
+      headline: `${provider} (${expense.currency} ${expense.manualRate.toFixed(4)} EUR)`,
+      detail: "",
     };
   }
 
@@ -53,15 +51,15 @@ export function buildExpenseReferenceSummary(expense: ExpenseReferenceLike) {
     !expense.referenceRateDate
   ) {
     return {
-      headline: "Reference EUR unavailable",
-      detail: "Historical conversion has not been loaded for this expense yet.",
+      headline: "Reference exchange rate unavailable",
+      detail: "",
     };
   }
 
-  const provider = expense.referenceRateProvider || "Reference rate";
+  const provider = expense.referenceRateProvider ? `${expense.referenceRateProvider} exchange rate` : "Reference exchange rate";
 
   return {
-    headline: `Reference EUR ${expense.referenceEurAmount.toFixed(2)}`,
-    detail: `${provider} · ${expense.referenceRateDate} · 1 ${expense.currency} = ${expense.referenceRate.toFixed(4)} EUR`,
+    headline: `${provider} (${expense.currency} ${expense.referenceRate.toFixed(4)} EUR)`,
+    detail: "",
   };
 }
