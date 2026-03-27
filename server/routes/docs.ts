@@ -1,4 +1,12 @@
+import { createError } from "h3";
+
+import { isDocsEnabled } from "../../utils/runtime-flags";
+
 export default defineEventHandler((event) => {
+  if (!isDocsEnabled(event)) {
+    throw createError({ statusCode: 404, statusMessage: "Not Found" });
+  }
+
   setResponseHeader(event, "content-type", "text/html; charset=utf-8");
 
   return `<!doctype html>

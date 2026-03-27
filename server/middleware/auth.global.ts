@@ -1,25 +1,15 @@
 import { H3Event, sendError } from 'h3';
 import { jwtVerify } from 'jose';
 
-const publicPaths = new Set(["/docs", "/openapi.yaml", "/api/auth/login", "/api/v1/auth/login"]);
+import { isDocsEnabled, isTruthyRuntimeFlag } from "../../utils/runtime-flags";
+
+const alwaysPublicPaths = new Set(["/api/auth/login", "/api/v1/auth/login"]);
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Authorization, Content-Type',
   'Access-Control-Allow-Credentials': 'true',
 };
-
-function isTruthyRuntimeFlag(value: unknown) {
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  if (typeof value === "string") {
-    return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-  }
-
-  return false;
-}
 
 export default defineEventHandler(async (event: H3Event) => {
   setResponseHeaders(event, corsHeaders);
@@ -29,7 +19,12 @@ export default defineEventHandler(async (event: H3Event) => {
     return "";
   }
 
-  if (publicPaths.has(getRequestURL(event).pathname)) {
+  const requestPath = getRequestURL(event).pathname;
+
+  if (
+    alwaysPublicPaths.has(requestPath) ||
+    (isDocsEnabled(event) && (requestPath === "/docs" || requestPath === "/openapi.yaml"))
+  ) {
     return;
   }
 

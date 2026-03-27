@@ -228,6 +228,7 @@ before(async () => {
       HOST: "127.0.0.1",
       NITRO_HOST: "127.0.0.1",
       NITRO_DEV_AUTH_BYPASS: "false",
+      NITRO_DOCS_ENABLED: "true",
       NITRO_REFERENCE_RATE_API_BASE: referenceRateBaseUrl,
     },
     stdio: "ignore",
@@ -336,6 +337,16 @@ test("versioned api aliases work for login and authenticated reads", async () =>
   const trips = await tripsResponse.json();
   assert.equal(trips.length, 1);
   assert.equal(trips[0].name, "Integration Trip");
+});
+
+test("docs routes respond when explicitly enabled", async () => {
+  const docsResponse = await fetch(`${baseUrl}/docs`);
+  const specResponse = await fetch(`${baseUrl}/openapi.yaml`);
+
+  assert.equal(docsResponse.status, 200);
+  assert.equal(specResponse.status, 200);
+  assert.match(await docsResponse.text(), /SwaggerUIBundle/);
+  assert.match(await specResponse.text(), /^openapi:/);
 });
 
 test("regular users only see their own trips while admins see all trips", async () => {

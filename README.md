@@ -27,6 +27,12 @@ When enabled, the global auth middleware skips JWT validation and injects a synt
 
 Leave `NITRO_DEV_AUTH_BYPASS=false` in normal or production-like environments.
 
+API docs are disabled by default. To expose `/docs` and `/openapi.yaml` locally, set this in `.env`:
+
+```dotenv
+NITRO_DOCS_ENABLED=true
+```
+
 ## Running the frontend
 
 Start the API first:
