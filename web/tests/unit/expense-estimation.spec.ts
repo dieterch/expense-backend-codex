@@ -51,7 +51,7 @@ describe("expense estimation helpers", () => {
     }, settings);
 
     expect(usdEstimate.estimatedBankMarkupBps).toBe(325);
-    expect(usdEstimate.estimatedTotalEurAmount).toBe(18.59);
+    expect(usdEstimate.estimatedTotalEurAmount).toBe(19.68);
 
     const eurEstimate = estimateExpenseEur({
       amount: 12,

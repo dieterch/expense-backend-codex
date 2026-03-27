@@ -1,0 +1,38 @@
+[
+  {
+    "currency": "GBP",
+    "date": "2025-06-30",
+    "referenceEurAmount": 3.976578189762782,
+    "actualEurAmount": 5.1
+  },
+  {
+    "currency": "GBP",
+    "date": "2025-06-27",
+    "referenceEurAmount": 78.15368970160357,
+    "actualEurAmount": 79.83
+  },
+  {
+    "currency": "GBP",
+    "date": "2025-06-25",
+    "referenceEurAmount": 18.851251840942563,
+    "actualEurAmount": 20.08
+  },
+  {
+    "currency": "GBP",
+    "date": "2025-06-23",
+    "referenceEurAmount": 12.91969919084359,
+    "actualEurAmount": 14.11
+  },
+  {
+    "currency": "GBP",
+    "date": "2025-06-17",
+    "referenceEurAmount": 402.201449338517,
+    "actualEurAmount": 406.31
+  },
+  {
+    "currency": "GBP",
+    "date": "2025-06-13",
+    "referenceEurAmount": 757.6450131589178,
+    "actualEurAmount": 764.42
+  }
+]

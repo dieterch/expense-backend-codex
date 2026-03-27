@@ -12,8 +12,8 @@ export type EstimatedExpenseLike = ExpenseReferenceLike & {
 };
 
 export const DEFAULT_ESTIMATION_SETTINGS: EstimationSettings = {
-  defaultMarkupBps: 150,
-  fixedFeeCents: 0,
+  defaultMarkupBps: 75,
+  fixedFeeCents: 109,
   weekendSurchargeBps: 0,
   currencyMarkupOverrides: {},
 };
