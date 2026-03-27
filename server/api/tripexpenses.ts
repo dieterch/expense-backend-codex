@@ -4,6 +4,7 @@ import prisma from "../../prisma/client.js";
 import { requireTripAccess } from "../../utils/access-control";
 import { normalizeRouteError } from "../../utils/route-error";
 import { ensureObjectBody, requireUuidLikeId } from "../../utils/request-validation";
+import { normalizeExpenseMoney } from "../../utils/money";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
     if (event.node.req.method === "POST") {
       const tripId = requireUuidLikeId(body.id, "id");
       await requireTripAccess(prisma, event, tripId);
-      return await prisma.expense.findMany({
+      const expenses = await prisma.expense.findMany({
         where: {
           tripId,
           // tripId: "9bb38019-873f-4bf4-8a35-ac4dffb49bf7"
@@ -36,6 +37,8 @@ export default defineEventHandler(async (event) => {
           category: true,
         },
       });
+
+      return expenses.map(normalizeExpenseMoney);
     }
 
     throw createError({ statusCode: 405, statusMessage: "Method not allowed" });

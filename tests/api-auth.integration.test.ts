@@ -139,6 +139,21 @@ before(async () => {
     },
   });
 
+  const category = await prisma.category.create({
+    data: {
+      name: "Meals",
+      icon: "fork-knife",
+    },
+  });
+
+  const currency = await prisma.currency.create({
+    data: {
+      name: "EUR",
+      symbol: "EUR",
+      factor: 1,
+    },
+  });
+
   await execFileAsync(npmCommand, ["run", "build"], { cwd: repoDir });
 
   serverProcess = spawn(process.execPath, [".output/server/index.mjs"], {
@@ -220,4 +235,70 @@ test("login returns a JWT, upgrades legacy password storage, and /api/me returns
 test("api/me rejects requests without a bearer token", async () => {
   const response = await fetch(`${baseUrl}/api/me`);
   assert.equal(response.status, 401);
+});
+
+test("expense writes and reads expose synced amount and amountCents", async () => {
+  const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const member = await prisma.user.findUniqueOrThrow({
+    where: { email: "member@example.com" },
+    select: { id: true },
+  });
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { name: "Integration Trip" },
+    select: { id: true },
+  });
+  const category = await prisma.category.findUniqueOrThrow({
+    where: { name: "Meals" },
+    select: { id: true },
+  });
+
+  const createResponse = await fetch(`${baseUrl}/api/expenses`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      amount: 12.34,
+      currency: "EUR",
+      date: "2025-03-01T12:00:00.000Z",
+      location: "Vienna",
+      description: "Lunch",
+      tripId: trip.id,
+      userId: member.id,
+      categoryId: category.id,
+    }),
+  });
+
+  assert.equal(createResponse.status, 200);
+  const createdExpense = await createResponse.json();
+  assert.equal(createdExpense.amount, 12.34);
+  assert.equal(createdExpense.amountCents, 1234);
+
+  const listResponse = await fetch(`${baseUrl}/api/expenses`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  assert.equal(listResponse.status, 200);
+  const expenses = await listResponse.json();
+  const expense = expenses.find((item: any) => item.id === createdExpense.id);
+
+  assert.ok(expense);
+  assert.equal(expense.amount, 12.34);
+  assert.equal(expense.amountCents, 1234);
 });

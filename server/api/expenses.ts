@@ -17,7 +17,7 @@ import {
   requireString,
   requireUuidLikeId,
 } from "../../utils/request-validation";
-import { amountToCents } from "../../utils/money";
+import { amountToCents, normalizeExpenseMoney } from "../../utils/money";
 
 export default defineEventHandler(async (event) => {
   await doPreChecks(event, "users.ts");
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
     if (event.node.req.method === "GET") {
       console.log("expenses.ts, method:", event.node.req.method);
-      return await prisma.expense.findMany({
+      const expenses = await prisma.expense.findMany({
         where: expenseReadWhereForUser(user),
         include: {
           trip: true,
@@ -39,6 +39,8 @@ export default defineEventHandler(async (event) => {
           category: true,
         },
       });
+
+      return expenses.map(normalizeExpenseMoney);
     }
 
     const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody
@@ -59,9 +61,11 @@ export default defineEventHandler(async (event) => {
       };
 
       await requireExpenseCreateAccess(prisma, event, createData.tripId, createData.userId);
-      return await prisma.expense.create({
+      const expense = await prisma.expense.create({
         data: createData,
       });
+
+      return normalizeExpenseMoney(expense);
     }
 
     if (event.node.req.method === "PUT") {
@@ -85,12 +89,14 @@ export default defineEventHandler(async (event) => {
         updateData.tripId = access.expense.tripId;
       }
 
-      return await prisma.expense.update({
+      const expense = await prisma.expense.update({
         where: {
           id: expenseId,
         },
         data: updateData,
       });
+
+      return normalizeExpenseMoney(expense);
     }
 
     if (event.node.req.method === "DELETE") {
