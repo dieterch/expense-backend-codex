@@ -3,7 +3,13 @@ import { expect, test } from "@playwright/test";
 test("member can create, edit, delete, and sign back out", async ({ page }) => {
   test.setTimeout(60_000);
 
-  await page.goto("/login");
+  await page.addInitScript(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+  });
+
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/login\?reason=(auth-required|session-expired)(&redirect=%2Ftrips)?$/, { timeout: 10000 });
 
   await page.getByLabel("Email").fill("dev-member@example.com");
   await page.getByLabel("Password").fill("dev-member-password");
