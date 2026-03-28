@@ -242,7 +242,7 @@ onMounted(loadExpenses);
                   <td class="description-column">{{ expense.description || "Expense" }}</td>
                   <td class="text-right amount-column">
                     <div>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
-                    <div class="text-caption text-medium-emphasis">
+                    <div v-if="expense.currency !== 'EUR'" class="text-caption text-medium-emphasis">
                       EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}
                     </div>
                     <ExpenseReferenceSummary
@@ -273,7 +273,9 @@ onMounted(loadExpenses);
                 </div>
                 <div class="text-right">
                   <div class="font-weight-bold">{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
-                  <div class="text-caption text-medium-emphasis">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
+                  <div v-if="expense.currency !== 'EUR'" class="text-caption text-medium-emphasis">
+                    EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}
+                  </div>
                 </div>
               </div>
 
