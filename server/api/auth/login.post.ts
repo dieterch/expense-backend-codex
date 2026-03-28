@@ -45,14 +45,16 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const secret = new TextEncoder().encode(useRuntimeConfig(event).jwtSecret);
+  const config = useRuntimeConfig(event);
+  const secret = new TextEncoder().encode(config.jwtSecret);
   const token = await createToken(
     {
       sub: user.id,
       role: user.role,
       email: user.email,
     },
-    secret
+    secret,
+    config.jwtExpiresIn || "30d",
   );
 
   return {

@@ -5,6 +5,7 @@ export default defineNitroConfig({
   runtimeConfig: {
     apiToken: "dev_token", // `dev_token` is the default value
     jwtSecret: "secret", // `secret` is the default value
+    jwtExpiresIn: "30d", // set `NITRO_JWT_EXPIRES_IN` to tune login lifetime
     devAuthBypass: "false", // set `NITRO_DEV_AUTH_BYPASS=true` for local development only
     docsEnabled: "false", // set `NITRO_DOCS_ENABLED=true` to expose /docs and /openapi.yaml
   }
