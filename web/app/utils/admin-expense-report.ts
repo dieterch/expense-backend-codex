@@ -1,10 +1,18 @@
 import * as XLSX from "xlsx";
+import { getExpenseDisplayAmount } from "./expense-reference";
 
 type ExpenseRecord = {
   id: string;
   amount: number;
   amountCents?: number;
   currency: string;
+  referenceEurAmount?: number | null;
+  referenceRate?: number | null;
+  referenceRateDate?: string | null;
+  referenceRateProvider?: string | null;
+  manualReferenceEurAmount?: number | null;
+  manualRate?: number | null;
+  manualRateProvider?: string | null;
   date: string;
   location: string;
   description?: string | null;
@@ -24,7 +32,7 @@ export function buildAdminExpenseExportRows(expenses: ExpenseRecord[]) {
     Location: expense.location,
     Currency: expense.currency,
     Amount: expense.amount,
-    AmountCents: expense.amountCents ?? Math.round(expense.amount * 100),
+    EurView: getExpenseDisplayAmount(expense),
   }));
 }
 

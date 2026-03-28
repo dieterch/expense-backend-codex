@@ -38,6 +38,7 @@ describe("admin expense report helpers", () => {
         amount: 12.5,
         amountCents: 1250,
         currency: "EUR",
+        referenceEurAmount: null,
         date: "2026-03-27T12:00:00.000Z",
         location: "Vienna",
         description: "Lunch",
@@ -58,7 +59,7 @@ describe("admin expense report helpers", () => {
         Location: "Vienna",
         Currency: "EUR",
         Amount: 12.5,
-        AmountCents: 1250,
+        EurView: 12.5,
       },
     ]);
   });

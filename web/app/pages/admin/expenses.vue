@@ -5,12 +5,19 @@ definePageMeta({
 
 import { exportAdminExpensesToWorkbook } from "~/utils/admin-expense-report";
 import CategoryIcon from "~/components/shared/CategoryIcon.vue";
+import ExpenseReferenceSummary from "~/components/trip/ExpenseReferenceSummary.vue";
+import { getExpenseDisplayAmount } from "~/utils/expense-reference";
 
 type Expense = {
   id: string;
   amount: number;
   amountCents: number;
   currency: string;
+  referenceRate?: number | null;
+  referenceRateProvider?: string | null;
+  referenceRateDate?: string | null;
+  referenceEurAmount?: number | null;
+  referenceEurAmountCents?: number | null;
   date: string;
   location: string;
   description?: string | null;
@@ -220,6 +227,7 @@ onMounted(loadExpenses);
                   <th>Description</th>
                   <th>Location</th>
                   <th class="text-right">Amount</th>
+                  <th class="text-right">EUR view</th>
                 </tr>
               </thead>
               <tbody>
@@ -240,7 +248,17 @@ onMounted(loadExpenses);
                   <td>{{ expense.location }}</td>
                   <td class="text-right">
                     <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
-                    <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
+                  </td>
+                  <td class="text-right">
+                    <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
+                    <ExpenseReferenceSummary
+                      :amount="expense.amount"
+                      :currency="expense.currency"
+                      :reference-eur-amount="expense.referenceEurAmount"
+                      :reference-rate="expense.referenceRate"
+                      :reference-rate-date="expense.referenceRateDate"
+                      :reference-rate-provider="expense.referenceRateProvider"
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -261,7 +279,7 @@ onMounted(loadExpenses);
                 </div>
                 <div class="text-right">
                   <div class="font-weight-bold">{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
-                  <div class="text-caption text-medium-emphasis">{{ expense.amountCents }} cents</div>
+                  <div class="text-caption text-medium-emphasis">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
                 </div>
               </div>
 
@@ -286,6 +304,15 @@ onMounted(loadExpenses);
                   <div>{{ expense.location }}</div>
                 </div>
               </div>
+
+              <ExpenseReferenceSummary
+                :amount="expense.amount"
+                :currency="expense.currency"
+                :reference-eur-amount="expense.referenceEurAmount"
+                :reference-rate="expense.referenceRate"
+                :reference-rate-date="expense.referenceRateDate"
+                :reference-rate-provider="expense.referenceRateProvider"
+              />
             </v-card>
           </div>
 
