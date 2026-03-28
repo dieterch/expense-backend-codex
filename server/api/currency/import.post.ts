@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
           displayName: currency.displayName,
           symbol: currency.symbol,
           factor: currency.factor || 1,
-          enabled: true,
+          enabled: false,
         },
       })),
     );
