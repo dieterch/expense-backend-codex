@@ -418,60 +418,70 @@ onMounted(loadTrip);
       <template v-else-if="trip">
         <v-row class="mb-6">
           <v-col cols="12" lg="8">
-            <v-card color="surface" class="pa-6">
-              <div class="d-flex flex-wrap justify-space-between align-start ga-4 mb-4">
-                <div>
+            <v-card color="surface" class="pa-6 trip-hero-card">
+              <div class="trip-hero-header mb-5">
+                <div class="trip-hero-copy">
                   <div class="text-overline text-secondary page-title font-weight-bold">Trip detail</div>
                   <h1 class="text-h3 mb-2">{{ trip.name }}</h1>
                   <div class="text-medium-emphasis">
                     Starts {{ new Date(trip.startDate).toLocaleDateString() }}
                   </div>
                 </div>
-                <v-sheet color="primary" rounded="xl" class="pa-4 text-white">
-                  <div class="text-caption text-uppercase mb-1">
+                <v-sheet color="background" rounded="xl" class="pa-5 trip-total-panel">
+                  <div class="text-caption text-medium-emphasis text-uppercase mb-2">
                     {{ hasForeignCurrencyExpenses ? "Tracked total (EUR ref)" : "Tracked total" }}
                   </div>
-                  <div class="text-h4">€ {{ totalAmount }}</div>
-                  <div v-if="hasForeignCurrencyExpenses" class="text-caption mt-2">
+                  <div class="text-h4 trip-total-value">€ {{ totalAmount }}</div>
+                  <div
+                    v-if="hasForeignCurrencyExpenses"
+                    class="text-body-2 text-medium-emphasis mt-3"
+                  >
                     Estimated bank total € {{ estimatedTripTotal }}
                   </div>
                 </v-sheet>
               </div>
 
-              <div class="d-flex flex-wrap ga-2 align-center">
-                <v-chip
-                  v-for="participant in participants"
-                  :key="participant.user.id"
-                  variant="outlined"
-                >
-                  {{ participant.user.name }} · x{{ (participant.user.settlementFactor || 1).toFixed(2) }}
-                </v-chip>
-                <v-btn
-                  variant="tonal"
-                  color="secondary"
-                  prepend-icon="mdi-chart-donut"
-                  class="ml-auto"
-                  @click="statsOpen = true"
-                >
-                  Statistics
-                </v-btn>
-                <v-btn
-                  variant="tonal"
-                  color="secondary"
-                  prepend-icon="mdi-scale-balance"
-                  @click="settlementOpen = true"
-                >
-                  Settlement
-                </v-btn>
-                <v-btn
-                  v-if="canEstimateForeignCurrency"
-                  variant="tonal"
-                  color="secondary"
-                  prepend-icon="mdi-tune-vertical"
-                  @click="openEstimationSettingsDialog"
-                >
-                  Estimation
-                </v-btn>
+              <div class="trip-hero-footer">
+                <div class="trip-participants">
+                  <v-chip
+                    v-for="participant in participants"
+                    :key="participant.user.id"
+                    variant="outlined"
+                    class="trip-participant-chip"
+                  >
+                    {{ participant.user.name }} · x{{ (participant.user.settlementFactor || 1).toFixed(2) }}
+                  </v-chip>
+                </div>
+                <div class="trip-actions">
+                  <v-btn
+                    variant="tonal"
+                    color="secondary"
+                    prepend-icon="mdi-chart-donut"
+                    class="trip-action-btn"
+                    @click="statsOpen = true"
+                  >
+                    Statistics
+                  </v-btn>
+                  <v-btn
+                    variant="tonal"
+                    color="secondary"
+                    prepend-icon="mdi-scale-balance"
+                    class="trip-action-btn"
+                    @click="settlementOpen = true"
+                  >
+                    Settlement
+                  </v-btn>
+                  <v-btn
+                    v-if="canEstimateForeignCurrency"
+                    variant="tonal"
+                    color="secondary"
+                    prepend-icon="mdi-tune-vertical"
+                    class="trip-action-btn"
+                    @click="openEstimationSettingsDialog"
+                  >
+                    Estimation
+                  </v-btn>
+                </div>
               </div>
             </v-card>
           </v-col>
@@ -747,3 +757,75 @@ onMounted(loadTrip);
     {{ formErrorMessage }}
   </v-snackbar>
 </template>
+
+<style scoped>
+.trip-hero-card {
+  border: 1px solid rgba(71, 105, 79, 0.08);
+}
+
+.trip-hero-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 1.5rem;
+}
+
+.trip-hero-copy {
+  flex: 1 1 20rem;
+}
+
+.trip-total-panel {
+  flex: 0 1 32rem;
+  min-width: 18rem;
+  border: 1px solid rgba(71, 105, 79, 0.12);
+  background:
+    linear-gradient(135deg, rgba(227, 233, 218, 0.95), rgba(244, 246, 238, 0.98));
+}
+
+.trip-total-value {
+  letter-spacing: -0.03em;
+}
+
+.trip-hero-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.25rem;
+}
+
+.trip-participants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  flex: 1 1 20rem;
+}
+
+.trip-participant-chip {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.trip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex: 0 1 28rem;
+}
+
+.trip-action-btn {
+  min-width: 10.5rem;
+}
+
+@media (max-width: 959px) {
+  .trip-total-panel {
+    min-width: 100%;
+  }
+
+  .trip-actions {
+    justify-content: flex-start;
+    flex: 1 1 100%;
+  }
+}
+</style>
