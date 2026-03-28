@@ -225,7 +225,6 @@ onMounted(loadExpenses);
                   <th class="payer-column">Payer</th>
                   <th class="category-column">Category</th>
                   <th class="description-column">Description</th>
-                  <th class="location-column">Location</th>
                   <th class="text-right amount-column">Amount</th>
                 </tr>
               </thead>
@@ -233,10 +232,7 @@ onMounted(loadExpenses);
                 <tr v-for="expense in filteredExpenses" :key="expense.id">
                   <td class="date-column">{{ new Date(expense.date).toLocaleDateString() }}</td>
                   <td class="trip-column">{{ expense.trip?.name || "Unknown trip" }}</td>
-                  <td class="payer-column">
-                    <div>{{ expense.user?.name || "Unknown payer" }}</div>
-                    <div class="text-caption text-medium-emphasis">{{ expense.user?.email || "" }}</div>
-                  </td>
+                  <td class="payer-column">{{ expense.user?.name || "Unknown payer" }}</td>
                   <td class="category-column">
                     <div class="d-flex align-center">
                       <CategoryIcon :icon="expense.category?.icon" />
@@ -244,7 +240,6 @@ onMounted(loadExpenses);
                     </div>
                   </td>
                   <td class="description-column">{{ expense.description || "Expense" }}</td>
-                  <td class="location-column">{{ expense.location }}</td>
                   <td class="text-right amount-column">
                     <div>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
                     <div class="text-caption text-medium-emphasis">
@@ -344,10 +339,6 @@ onMounted(loadExpenses);
 
 .description-column {
   max-width: 14rem;
-}
-
-.location-column {
-  max-width: 9rem;
 }
 
 .amount-column {
