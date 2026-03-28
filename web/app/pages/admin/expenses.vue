@@ -227,7 +227,6 @@ onMounted(loadExpenses);
                   <th class="description-column">Description</th>
                   <th class="location-column">Location</th>
                   <th class="text-right amount-column">Amount</th>
-                  <th class="text-right eur-view-column">EUR view</th>
                 </tr>
               </thead>
               <tbody>
@@ -247,10 +246,10 @@ onMounted(loadExpenses);
                   <td class="description-column">{{ expense.description || "Expense" }}</td>
                   <td class="location-column">{{ expense.location }}</td>
                   <td class="text-right amount-column">
-                    <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
-                  </td>
-                  <td class="text-right eur-view-column">
-                    <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
+                    <div>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</div>
+                    <div class="text-caption text-medium-emphasis">
+                      EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}
+                    </div>
                     <ExpenseReferenceSummary
                       :amount="expense.amount"
                       :currency="expense.currency"
@@ -327,8 +326,7 @@ onMounted(loadExpenses);
 
 <style scoped>
 .date-column,
-.amount-column,
-.eur-view-column {
+.amount-column {
   white-space: nowrap;
 }
 
@@ -354,10 +352,6 @@ onMounted(loadExpenses);
 
 .amount-column {
   min-width: 7.5rem;
-}
-
-.eur-view-column {
-  min-width: 11.5rem;
 }
 
 .eur-view-column :deep(.text-caption) {
