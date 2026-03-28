@@ -227,7 +227,7 @@ onMounted(loadExpenses);
                   <th>Description</th>
                   <th>Location</th>
                   <th class="text-right">Amount</th>
-                  <th class="text-right">EUR view</th>
+                  <th class="text-right eur-view-column">EUR view</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,7 +249,7 @@ onMounted(loadExpenses);
                   <td class="text-right">
                     <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
                   </td>
-                  <td class="text-right">
+                  <td class="text-right eur-view-column">
                     <div class="font-weight-medium">EUR {{ getExpenseDisplayAmount(expense).toFixed(2) }}</div>
                     <ExpenseReferenceSummary
                       :amount="expense.amount"
@@ -324,3 +324,13 @@ onMounted(loadExpenses);
     </div>
   </v-container>
 </template>
+
+<style scoped>
+.eur-view-column {
+  min-width: 11.5rem;
+}
+
+.eur-view-column :deep(.text-caption) {
+  white-space: normal;
+}
+</style>
