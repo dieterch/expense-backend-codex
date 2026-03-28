@@ -142,4 +142,44 @@ describe("expense editor dialog", () => {
       expect((wrapper.props("form") as any).location).toBe("Innere Stadt, Vienna, Austria");
     });
   });
+
+  it("shows a permission hint when geolocation is blocked", async () => {
+    const getCurrentPosition = vi.fn((
+      _resolve: (value: GeolocationPosition) => void,
+      reject: (reason?: unknown) => void,
+    ) => {
+      reject({
+        code: 1,
+      } as GeolocationPositionError);
+    });
+    vi.stubGlobal("navigator", {
+      geolocation: {
+        getCurrentPosition,
+      },
+      language: "en-US",
+    });
+
+    const wrapper = await mountSuspended(ExpenseEditorDialog, {
+      props: {
+        ...baseProps,
+        form: {
+          ...baseProps.form,
+          location: "",
+        },
+        isAdmin: false,
+      },
+      global: {
+        stubs: {
+          VDialog: {
+            props: ["modelValue"],
+            template: "<div><slot /></div>",
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain("Firefox blocked location access for this site.");
+    });
+  });
 });

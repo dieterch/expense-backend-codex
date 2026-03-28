@@ -37,6 +37,32 @@ type ReverseGeocodePayload = {
   countryName?: string;
 };
 
+function isGeolocationPositionError(error: unknown): error is GeolocationPositionError {
+  return typeof error === "object" && error !== null && "code" in error;
+}
+
+function getLocationErrorHint(error: unknown) {
+  if (isGeolocationPositionError(error)) {
+    if (error.code === 1) {
+      return "Firefox blocked location access for this site. Allow location in the address bar permissions and try again.";
+    }
+
+    if (error.code === 2) {
+      return "Your current position is unavailable right now. Please try again in a moment.";
+    }
+
+    if (error.code === 3) {
+      return "Determining your current position timed out. Please try again.";
+    }
+  }
+
+  if (error instanceof Error && error.message.startsWith("Reverse geocoding")) {
+    return "Your position was found, but the place name lookup failed. You can still enter the location manually.";
+  }
+
+  return "Unable to determine your current location automatically.";
+}
+
 const props = defineProps<{
   modelValue: boolean;
   saving: boolean;
@@ -133,8 +159,8 @@ async function autofillLocation() {
     }
 
     locationHint.value = "";
-  } catch {
-    locationHint.value = "Unable to determine your current location automatically.";
+  } catch (error) {
+    locationHint.value = getLocationErrorHint(error);
   } finally {
     if (requestId === locationRequestId) {
       isLocating.value = false;
