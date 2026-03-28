@@ -18,6 +18,13 @@ type FrankfurterCurrencyPayload = Array<{
   symbol?: string;
 }>;
 
+type FrankfurterLatestRatePayload = Array<{
+  date?: string;
+  base?: string;
+  quote?: string;
+  rate?: number;
+}>;
+
 type ExpenseReferenceBackfillRecord = {
   id: string;
   amount: number;
@@ -123,22 +130,57 @@ export async function resolveExpenseReferenceExchange(options: {
 export async function importCurrenciesFromFrankfurter(options?: {
   fetchImpl?: typeof fetch;
 }) {
-  const url = new URL(`${resolveCurrencyApiBase()}/currencies`);
-  const response = await (options?.fetchImpl || fetch)(url);
+  const fetchImpl = options?.fetchImpl || fetch;
+  const currenciesUrl = new URL(`${resolveCurrencyApiBase()}/currencies`);
+  const ratesUrl = new URL(`${resolveReferenceRateApiBase()}/rates`);
+  ratesUrl.searchParams.set("base", "EUR");
 
-  if (!response.ok) {
+  const [currenciesResponse, ratesResponse] = await Promise.all([
+    fetchImpl(currenciesUrl),
+    fetchImpl(ratesUrl),
+  ]);
+
+  if (!currenciesResponse.ok) {
     throw createError({
       statusCode: 502,
       statusMessage: "Failed to fetch currencies from Frankfurter",
     });
   }
 
-  const payload = await response.json() as FrankfurterCurrencyPayload;
+  if (!ratesResponse.ok) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "Failed to fetch currency factors from Frankfurter",
+    });
+  }
+
+  const payload = await currenciesResponse.json() as FrankfurterCurrencyPayload;
   if (!Array.isArray(payload)) {
     throw createError({
       statusCode: 502,
       statusMessage: "Currency data from Frankfurter was incomplete",
     });
+  }
+
+  const ratesPayload = await ratesResponse.json() as FrankfurterLatestRatePayload;
+  if (!Array.isArray(ratesPayload)) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: "Currency factor data from Frankfurter was incomplete",
+    });
+  }
+
+  const factorByCurrency = new Map<string, number>();
+
+  for (const entry of ratesPayload) {
+    const quote = typeof entry.quote === "string" ? normalizeCurrencyCode(entry.quote) : "";
+    const rate = entry.rate;
+
+    if (!quote || typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
+      continue;
+    }
+
+    factorByCurrency.set(quote, 1 / rate);
   }
 
   return payload
@@ -149,6 +191,9 @@ export async function importCurrenciesFromFrankfurter(options?: {
         : typeof entry.iso_code === "string"
           ? normalizeCurrencyCode(entry.iso_code)
           : "",
+      factor: typeof entry.iso_code === "string" && normalizeCurrencyCode(entry.iso_code) === "EUR"
+        ? 1
+        : factorByCurrency.get(typeof entry.iso_code === "string" ? normalizeCurrencyCode(entry.iso_code) : "") || null,
     }))
     .filter((entry) => entry.name.length > 0);
 }

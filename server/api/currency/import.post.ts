@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
         create: {
           name: currency.name,
           symbol: currency.symbol,
-          factor: currency.name === "EUR" ? 1 : existingByName.get(currency.name)?.factor || 1,
+          factor: existingByName.get(currency.name)?.factor || currency.factor || 1,
         },
       })),
     );

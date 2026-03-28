@@ -40,31 +40,56 @@ test("resolveExpenseReferenceExchange uses the Frankfurter v2 rates payload", as
 
 test("importCurrenciesFromFrankfurter normalizes iso codes and symbols", async () => {
   const result = await importCurrenciesFromFrankfurter({
-    fetchImpl: async () => new Response(JSON.stringify([
-      {
-        iso_code: " eur ",
-        symbol: "€",
-      },
-      {
-        iso_code: "usd",
-        symbol: "",
-      },
-    ]), {
-      status: 200,
-      headers: {
-        "content-type": "application/json",
-      },
-    }),
+    fetchImpl: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname === "/v2/currencies") {
+        return new Response(JSON.stringify([
+          {
+            iso_code: " eur ",
+            symbol: "€",
+          },
+          {
+            iso_code: "usd",
+            symbol: "",
+          },
+        ]), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        });
+      }
+
+      assert.equal(url.pathname, "/v2/rates");
+      assert.equal(url.searchParams.get("base"), "EUR");
+
+      return new Response(JSON.stringify([
+        {
+          date: "2026-03-27",
+          base: "EUR",
+          quote: "USD",
+          rate: 1.08,
+        },
+      ]), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      });
+    },
   });
 
   assert.deepEqual(result, [
     {
       name: "EUR",
       symbol: "€",
+      factor: 1,
     },
     {
       name: "USD",
       symbol: "USD",
+      factor: 1 / 1.08,
     },
   ]);
 });
