@@ -3,6 +3,14 @@ import { requireAdminUser, requireAuthenticatedUser } from "../../utils/access-c
 import { normalizeRouteError } from "../../utils/route-error";
 import { ensureObjectBody, requireNumber, requireString } from "../../utils/request-validation";
 
+function requireBoolean(value: unknown, fieldName: string) {
+  if (typeof value !== "boolean") {
+    throw createError({ statusCode: 400, statusMessage: `${fieldName} must be a boolean` });
+  }
+
+  return value;
+}
+
 export default defineEventHandler(async (event) => {
   try {
     requireAuthenticatedUser(event);
@@ -15,6 +23,7 @@ export default defineEventHandler(async (event) => {
           displayName: true,
           symbol: true,
           factor: true,
+          enabled: true,
         },
       });
     }
@@ -30,6 +39,7 @@ export default defineEventHandler(async (event) => {
           displayName: requireString(body.displayName, "displayName"),
           symbol: requireString(body.symbol, "symbol"),
           factor: requireNumber(body.factor, "factor"),
+          enabled: requireBoolean(body.enabled, "enabled"),
         },
       });
     }
@@ -42,6 +52,7 @@ export default defineEventHandler(async (event) => {
           displayName: requireString(body.displayName, "displayName"),
           symbol: requireString(body.symbol, "symbol"),
           factor: requireNumber(body.factor, "factor"),
+          enabled: requireBoolean(body.enabled, "enabled"),
         },
       });
     }

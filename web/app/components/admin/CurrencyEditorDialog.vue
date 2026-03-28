@@ -4,6 +4,7 @@ type CurrencyFormState = {
   displayName: string;
   symbol: string;
   factor: number;
+  enabled: boolean;
 };
 
 defineProps<{
@@ -63,6 +64,12 @@ const emit = defineEmits<{
           min="0"
           label="Factor"
           prepend-inner-icon="mdi-chart-line"
+          class="mb-3"
+        />
+        <v-checkbox
+          v-model="form.enabled"
+          label="Available in trip expense dialogs"
+          color="secondary"
           class="mb-4"
         />
 

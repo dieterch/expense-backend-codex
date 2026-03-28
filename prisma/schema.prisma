@@ -99,5 +99,6 @@ model Currency {
   displayName String
   symbol      String
   factor      Float
+  enabled     Boolean   @default(true)
   expenses    Expense[] // Gegen-Relation zur Expense.currencyRef
 }

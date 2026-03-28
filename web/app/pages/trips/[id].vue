@@ -70,6 +70,7 @@ type Currency = {
   displayName?: string;
   symbol: string;
   factor: number;
+  enabled: boolean;
 };
 
 const route = useRoute();
@@ -182,6 +183,9 @@ function resetForm(options: { preserveRecent?: boolean } = {}) {
 
 function openCreateDialog() {
   resetForm({ preserveRecent: true });
+  if (!availableCurrencies.value.some((currency) => currency.name === form.currency) && availableCurrencies.value[0]) {
+    form.currency = availableCurrencies.value[0].name;
+  }
   editorOpen.value = true;
 }
 
@@ -385,6 +389,21 @@ const sortedExpenses = computed(() =>
   [...expenses.value].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime()),
 );
 const displayExpenses = computed(() => sortedExpenses.value.map((expense) => getDisplayExpense(expense)));
+const availableCurrencies = computed(() => {
+  const enabledCurrencies = currencies.value.filter((currency) => currency.enabled);
+
+  if (!editingExpenseId.value) {
+    return enabledCurrencies;
+  }
+
+  const currentExpense = expenses.value.find((expense) => expense.id === editingExpenseId.value);
+  if (!currentExpense || enabledCurrencies.some((currency) => currency.name === currentExpense.currency)) {
+    return enabledCurrencies;
+  }
+
+  const currentCurrency = currencies.value.find((currency) => currency.name === currentExpense.currency);
+  return currentCurrency ? [...enabledCurrencies, currentCurrency] : enabledCurrencies;
+});
 
 const stats = computed(() => calculateTripStats(displayExpenses.value, trip.value?.startDate));
 const settlement = computed(() => calculateTripSettlement(participants.value, displayExpenses.value));
@@ -693,7 +712,7 @@ onMounted(loadTrip);
     :title="editingExpenseId ? 'Edit expense' : 'Add expense'"
     :submit-label="editingExpenseId ? 'Save changes' : 'Create expense'"
     :categories="categories"
-    :currencies="currencies"
+    :currencies="availableCurrencies"
     :participants="participants"
     :form="form"
     :is-admin="auth.isAdmin.value"

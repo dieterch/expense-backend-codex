@@ -10,6 +10,7 @@ type Currency = {
   displayName: string;
   symbol: string;
   factor: number;
+  enabled: boolean;
 };
 
 const api = useApi();
@@ -29,6 +30,7 @@ const form = reactive({
   displayName: "",
   symbol: "",
   factor: 1,
+  enabled: true,
 });
 
 async function loadCurrencies() {
@@ -50,6 +52,7 @@ function resetForm() {
   form.displayName = "";
   form.symbol = "";
   form.factor = 1;
+  form.enabled = true;
   editingName.value = null;
 }
 
@@ -64,6 +67,7 @@ function openEditDialog(currency: Currency) {
   form.displayName = currency.displayName;
   form.symbol = currency.symbol;
   form.factor = currency.factor;
+  form.enabled = currency.enabled;
   dialogOpen.value = true;
 }
 
@@ -79,6 +83,7 @@ async function saveCurrency() {
         displayName: form.displayName.trim(),
         symbol: form.symbol.trim(),
         factor: Number(form.factor),
+        enabled: form.enabled,
       });
       currencies.value = currencies.value.map((entry) => (entry.name === editingName.value ? updated : entry));
     } else {
@@ -87,6 +92,7 @@ async function saveCurrency() {
         displayName: form.displayName.trim(),
         symbol: form.symbol.trim(),
         factor: Number(form.factor),
+        enabled: form.enabled,
       });
       currencies.value = [...currencies.value, created].sort((left, right) => left.name.localeCompare(right.name));
     }
@@ -134,6 +140,31 @@ async function importCurrencies() {
     errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to import currencies";
   } finally {
     importing.value = false;
+  }
+}
+
+async function saveCurrencyEnabled(currency: Currency, nextValue: boolean | null) {
+  if (typeof nextValue !== "boolean") {
+    return;
+  }
+
+  const previousValue = currency.enabled;
+  currency.enabled = nextValue;
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  try {
+    const updated = await api.put<Currency, Record<string, unknown>>("/currency", {
+      name: currency.name,
+      displayName: currency.displayName,
+      symbol: currency.symbol,
+      factor: currency.factor,
+      enabled: nextValue,
+    });
+    currencies.value = currencies.value.map((entry) => (entry.name === currency.name ? updated : entry));
+  } catch (error: any) {
+    currency.enabled = previousValue;
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to update currency";
   }
 }
 
@@ -207,6 +238,7 @@ onMounted(loadCurrencies);
                 <th>Code</th>
                 <th>Name</th>
                 <th>Symbol</th>
+                <th class="text-center">Enabled</th>
                 <th class="text-right">Factor</th>
                 <th class="text-right">Actions</th>
               </tr>
@@ -216,6 +248,13 @@ onMounted(loadCurrencies);
                 <td>{{ currency.name }}</td>
                 <td>{{ currency.displayName }}</td>
                 <td>{{ currency.symbol }}</td>
+                <td class="text-center">
+                  <v-checkbox-btn
+                    :model-value="currency.enabled"
+                    color="secondary"
+                    @update:model-value="saveCurrencyEnabled(currency, $event)"
+                  />
+                </td>
                 <td class="text-right">{{ formatFactor(currency.factor) }}</td>
                 <td class="text-right">
                   <div class="d-inline-flex ga-2">

@@ -13,6 +13,7 @@ export default defineEventHandler(async (event) => {
         name: true,
         displayName: true,
         factor: true,
+        enabled: true,
       },
     });
     const existingByName = new Map(existingCurrencies.map((currency) => [currency.name, currency]));
@@ -32,6 +33,7 @@ export default defineEventHandler(async (event) => {
           displayName: currency.displayName,
           symbol: currency.symbol,
           factor: currency.factor || 1,
+          enabled: true,
         },
       })),
     );
@@ -42,6 +44,7 @@ export default defineEventHandler(async (event) => {
         displayName: true,
         symbol: true,
         factor: true,
+        enabled: true,
       },
       orderBy: {
         name: "asc",
