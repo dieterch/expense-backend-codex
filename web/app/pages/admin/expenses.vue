@@ -217,36 +217,36 @@ onMounted(loadExpenses);
 
         <template v-else>
           <div class="desktop-table-only table-shell">
-            <v-table class="admin-expenses-table">
+            <v-table>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Trip</th>
-                  <th>Payer</th>
-                  <th>Category</th>
-                  <th>Description</th>
-                  <th>Location</th>
-                  <th class="text-right">Amount</th>
+                  <th class="date-column">Date</th>
+                  <th class="trip-column">Trip</th>
+                  <th class="payer-column">Payer</th>
+                  <th class="category-column">Category</th>
+                  <th class="description-column">Description</th>
+                  <th class="location-column">Location</th>
+                  <th class="text-right amount-column">Amount</th>
                   <th class="text-right eur-view-column">EUR view</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="expense in filteredExpenses" :key="expense.id">
-                  <td>{{ new Date(expense.date).toLocaleDateString() }}</td>
-                  <td>{{ expense.trip?.name || "Unknown trip" }}</td>
-                  <td>
+                  <td class="date-column">{{ new Date(expense.date).toLocaleDateString() }}</td>
+                  <td class="trip-column">{{ expense.trip?.name || "Unknown trip" }}</td>
+                  <td class="payer-column">
                     <div>{{ expense.user?.name || "Unknown payer" }}</div>
                     <div class="text-caption text-medium-emphasis">{{ expense.user?.email || "" }}</div>
                   </td>
-                  <td>
+                  <td class="category-column">
                     <div class="d-flex align-center">
                       <CategoryIcon :icon="expense.category?.icon" />
                       <span class="ml-2">{{ expense.category?.name || "Uncategorized" }}</span>
                     </div>
                   </td>
-                  <td>{{ expense.description || "Expense" }}</td>
-                  <td>{{ expense.location }}</td>
-                  <td class="text-right">
+                  <td class="description-column">{{ expense.description || "Expense" }}</td>
+                  <td class="location-column">{{ expense.location }}</td>
+                  <td class="text-right amount-column">
                     <strong>{{ expense.currency }} {{ expense.amount.toFixed(2) }}</strong>
                   </td>
                   <td class="text-right eur-view-column">
@@ -326,8 +326,34 @@ onMounted(loadExpenses);
 </template>
 
 <style scoped>
-.admin-expenses-table {
-  min-width: 78rem;
+.date-column,
+.amount-column,
+.eur-view-column {
+  white-space: nowrap;
+}
+
+.trip-column {
+  max-width: 10rem;
+}
+
+.payer-column {
+  max-width: 14rem;
+}
+
+.category-column {
+  max-width: 10rem;
+}
+
+.description-column {
+  max-width: 14rem;
+}
+
+.location-column {
+  max-width: 9rem;
+}
+
+.amount-column {
+  min-width: 7.5rem;
 }
 
 .eur-view-column {
