@@ -14,16 +14,17 @@ generator client {
 }
 
 model User {
-  id        String      @id @default(uuid())
-  email     String      @unique
-  name      String
-  password  String
-  role      String
-  trips     TripUser[] // Beziehung zu den Trips
-  expenses  Expense[] // Ausgaben des Nutzers
-  shares    TripShare[] // Anteil an den Gesamtkosten pro Trip
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id               String      @id @default(uuid())
+  email            String      @unique
+  name             String
+  password         String
+  role             String
+  settlementFactor Float       @default(1)
+  trips            TripUser[] // Beziehung zu den Trips
+  expenses         Expense[] // Ausgaben des Nutzers
+  shares           TripShare[] // Anteil an den Gesamtkosten pro Trip
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
 }
 
 model Trip {

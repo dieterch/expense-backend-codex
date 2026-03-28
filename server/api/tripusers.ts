@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
               id: true,
               name: true,
               email: true,
+              settlementFactor: true,
             },
           },
         },

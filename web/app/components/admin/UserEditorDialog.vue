@@ -4,6 +4,7 @@ type UserFormState = {
   email: string;
   password: string;
   role: string;
+  settlementFactor: number;
 };
 
 const props = defineProps<{
@@ -24,6 +25,8 @@ const isValid = computed(() =>
   Boolean(props.form.name.trim()) &&
   Boolean(props.form.email.trim()) &&
   Boolean(props.form.role) &&
+  Number.isFinite(props.form.settlementFactor) &&
+  props.form.settlementFactor > 0 &&
   (props.isEditing || Boolean(props.form.password.trim())),
 );
 </script>
@@ -62,6 +65,15 @@ const isValid = computed(() =>
           label="Role"
           :items="['user', 'admin']"
           prepend-inner-icon="mdi-shield-account-outline"
+          class="mb-3"
+        />
+        <v-text-field
+          v-model.number="form.settlementFactor"
+          label="Settlement factor"
+          type="number"
+          min="0.01"
+          step="0.01"
+          prepend-inner-icon="mdi-scale-balance"
           class="mb-3"
         />
         <v-text-field

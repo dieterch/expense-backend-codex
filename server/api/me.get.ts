@@ -10,6 +10,7 @@ export default defineEventHandler(async (event) => {
       email: "dev-mode@example.local",
       name: "Developer Mode",
       role: authUser.role ?? "developer",
+      settlementFactor: 1,
       trips: [],
     };
   }
@@ -21,6 +22,7 @@ export default defineEventHandler(async (event) => {
       email: true,
       name: true,
       role: true,
+      settlementFactor: true,
       trips: {
         select: {
           trip: {
@@ -45,6 +47,7 @@ export default defineEventHandler(async (event) => {
     email: user.email,
     name: user.name,
     role: user.role,
+    settlementFactor: user.settlementFactor,
     trips: user.trips.map(({ trip }) => trip),
   };
 });

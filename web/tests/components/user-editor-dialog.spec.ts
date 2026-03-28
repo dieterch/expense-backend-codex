@@ -28,6 +28,7 @@ describe("user editor dialog", () => {
           email: "new@example.com",
           password: "",
           role: "user",
+          settlementFactor: 1,
         },
       },
       global: {
@@ -57,6 +58,7 @@ describe("user editor dialog", () => {
           email: "dev-admin@example.com",
           password: "",
           role: "admin",
+          settlementFactor: 1.5,
         },
       },
       global: {

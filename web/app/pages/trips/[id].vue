@@ -6,6 +6,7 @@ definePageMeta({
 import ExpenseEditorDialog from "~/components/trip/ExpenseEditorDialog.vue";
 import EstimationSettingsDialog from "~/components/trip/EstimationSettingsDialog.vue";
 import ExpenseReferenceSummary from "~/components/trip/ExpenseReferenceSummary.vue";
+import TripSettlementDialog from "~/components/trip/TripSettlementDialog.vue";
 import TripStatsDialog from "~/components/trip/TripStatsDialog.vue";
 import CategoryIcon from "~/components/shared/CategoryIcon.vue";
 import {
@@ -15,6 +16,7 @@ import {
   type EstimationSettings,
 } from "~/utils/expense-estimation";
 import { getExpenseDisplayAmount } from "~/utils/expense-reference";
+import { calculateTripSettlement } from "~/utils/trip-settlement";
 import { calculateTripStats } from "~/utils/trip-stats";
 
 type Trip = {
@@ -22,7 +24,7 @@ type Trip = {
   name: string;
   startDate: string;
   endDate?: string | null;
-  users?: Array<{ user: { id: string; name: string; email: string } }>;
+  users?: Array<{ user: { id: string; name: string; email: string; settlementFactor?: number } }>;
 };
 
 type TripUser = {
@@ -30,6 +32,7 @@ type TripUser = {
     id: string;
     name: string;
     email: string;
+    settlementFactor?: number;
   };
 };
 
@@ -90,6 +93,7 @@ const categories = ref<Category[]>([]);
 const currencies = ref<Currency[]>([]);
 const editorOpen = ref(false);
 const statsOpen = ref(false);
+const settlementOpen = ref(false);
 const estimationSettingsOpen = ref(false);
 const editingExpenseId = ref<string | null>(null);
 const deleteTarget = ref<Expense | null>(null);
@@ -375,6 +379,7 @@ const sortedExpenses = computed(() =>
 const displayExpenses = computed(() => sortedExpenses.value.map((expense) => getDisplayExpense(expense)));
 
 const stats = computed(() => calculateTripStats(displayExpenses.value, trip.value?.startDate));
+const settlement = computed(() => calculateTripSettlement(participants.value, displayExpenses.value));
 const totalAmount = computed(() => stats.value.totalAmount.toFixed(2));
 const estimatedTripTotal = computed(() =>
   estimateTripTotal(displayExpenses.value, estimationSettingsState.settings.value).toFixed(2),
@@ -439,7 +444,7 @@ onMounted(loadTrip);
                   :key="participant.user.id"
                   variant="outlined"
                 >
-                  {{ participant.user.name }}
+                  {{ participant.user.name }} · x{{ (participant.user.settlementFactor || 1).toFixed(2) }}
                 </v-chip>
                 <v-btn
                   variant="tonal"
@@ -449,6 +454,14 @@ onMounted(loadTrip);
                   @click="statsOpen = true"
                 >
                   Statistics
+                </v-btn>
+                <v-btn
+                  variant="tonal"
+                  color="secondary"
+                  prepend-icon="mdi-scale-balance"
+                  @click="settlementOpen = true"
+                >
+                  Settlement
                 </v-btn>
                 <v-btn
                   v-if="canEstimateForeignCurrency"
@@ -685,6 +698,14 @@ onMounted(loadTrip);
     :duration-days="stats.durationDays"
     :average-per-day="stats.averagePerDay"
     :category-breakdown="stats.categoryBreakdown"
+  />
+
+  <TripSettlementDialog
+    v-model="settlementOpen"
+    :total-amount="settlement.totalAmount"
+    :factor-total="settlement.factorTotal"
+    :members="settlement.members"
+    :payments="settlement.payments"
   />
 
   <EstimationSettingsDialog

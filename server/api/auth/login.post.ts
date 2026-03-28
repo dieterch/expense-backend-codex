@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
       name: true,
       password: true,
       role: true,
+      settlementFactor: true,
     },
   });
 
@@ -64,6 +65,7 @@ export default defineEventHandler(async (event) => {
       email: user.email,
       name: user.name,
       role: user.role,
+      settlementFactor: user.settlementFactor,
     },
   };
 });

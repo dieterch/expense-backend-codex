@@ -10,6 +10,7 @@ type User = {
   name: string;
   email: string;
   role: string;
+  settlementFactor: number;
   trips?: Array<unknown>;
   expenses?: Array<unknown>;
 };
@@ -28,6 +29,7 @@ const form = reactive({
   email: "",
   password: "",
   role: "user",
+  settlementFactor: 1,
 });
 
 async function loadUsers() {
@@ -48,6 +50,7 @@ function resetForm() {
   form.email = "";
   form.password = "";
   form.role = "user";
+  form.settlementFactor = 1;
   editingId.value = null;
 }
 
@@ -62,6 +65,7 @@ function openEditDialog(user: User) {
   form.email = user.email;
   form.password = "";
   form.role = user.role;
+  form.settlementFactor = user.settlementFactor;
   dialogOpen.value = true;
 }
 
@@ -77,6 +81,7 @@ async function saveUser() {
         email: form.email.trim(),
         password: form.password.trim() || undefined,
         role: form.role,
+        settlementFactor: Number(form.settlementFactor),
       });
 
       users.value = users.value.map((entry) => (entry.id === editingId.value ? updated : entry));
@@ -86,6 +91,7 @@ async function saveUser() {
         email: form.email.trim(),
         password: form.password.trim(),
         role: form.role,
+        settlementFactor: Number(form.settlementFactor),
       });
 
       users.value = [created, ...users.value];
@@ -147,6 +153,7 @@ onMounted(loadUsers);
                 <th>Name</th>
                 <th>Email</th>
                 <th>Role</th>
+                <th class="text-right">Factor</th>
                 <th class="text-right">Trips</th>
                 <th class="text-right">Expenses</th>
                 <th class="text-right">Actions</th>
@@ -161,6 +168,7 @@ onMounted(loadUsers);
                     {{ user.role }}
                   </v-chip>
                 </td>
+                <td class="text-right">{{ user.settlementFactor.toFixed(2) }}</td>
                 <td class="text-right">{{ user.trips?.length || 0 }}</td>
                 <td class="text-right">{{ user.expenses?.length || 0 }}</td>
                 <td class="text-right">

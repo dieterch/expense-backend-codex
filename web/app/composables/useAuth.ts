@@ -5,6 +5,7 @@ type AuthUser = {
   email: string;
   name: string;
   role: string;
+  settlementFactor?: number;
   trips?: Array<{ id: string; name: string; startDate: string; endDate?: string | null }>;
 };
 

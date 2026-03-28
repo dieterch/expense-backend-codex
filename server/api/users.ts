@@ -3,7 +3,20 @@ import prisma from "../../prisma/client.js";
 import { requireAdminUser } from "../../utils/access-control";
 import { hashPassword } from "../../utils/password";
 import { normalizeRouteError } from "../../utils/route-error";
-import { ensureObjectBody, optionalString, requireString, requireUuidLikeId } from "../../utils/request-validation";
+import { ensureObjectBody, optionalString, requireNumber, requireString, requireUuidLikeId } from "../../utils/request-validation";
+
+function requireSettlementFactor(value: unknown) {
+  const factor = requireNumber(value, "settlementFactor");
+
+  if (factor <= 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: "settlementFactor must be greater than 0",
+    });
+  }
+
+  return factor;
+}
 
 export default defineEventHandler(async (event) => {
   try {
@@ -17,6 +30,7 @@ export default defineEventHandler(async (event) => {
           name: true,
           email: true,
           role: true,
+          settlementFactor: true,
           trips: true,
           expenses: true,
           //shares:true
@@ -33,6 +47,7 @@ export default defineEventHandler(async (event) => {
         name: requireString(body.name, "name"),
         password: await hashPassword(requireString(body.password, "password")),
         role: requireString(body.role, "role"),
+        settlementFactor: requireSettlementFactor(body.settlementFactor),
       };
 
       return await prisma.user.create({
@@ -45,6 +60,7 @@ export default defineEventHandler(async (event) => {
         email: requireString(body.email, "email").toLowerCase(),
         name: requireString(body.name, "name"),
         role: requireString(body.role, "role"),
+        settlementFactor: requireSettlementFactor(body.settlementFactor),
       };
 
       const password = optionalString(body.password, "password");
