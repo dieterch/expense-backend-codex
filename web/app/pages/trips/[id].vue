@@ -97,6 +97,10 @@ const settlementOpen = ref(false);
 const estimationSettingsOpen = ref(false);
 const editingExpenseId = ref<string | null>(null);
 const deleteTarget = ref<Expense | null>(null);
+const lastCreateDefaults = reactive({
+  currency: "EUR",
+  location: "",
+});
 
 const form = reactive({
   amount: 0,
@@ -162,11 +166,13 @@ async function loadTrip() {
   }
 }
 
-function resetForm() {
+function resetForm(options: { preserveRecent?: boolean } = {}) {
   form.amount = 0;
-  form.currency = currencies.value[0]?.name || "EUR";
+  form.currency = options.preserveRecent
+    ? lastCreateDefaults.currency || currencies.value[0]?.name || "EUR"
+    : currencies.value[0]?.name || "EUR";
   form.date = new Date().toISOString().slice(0, 10);
-  form.location = "";
+  form.location = options.preserveRecent ? lastCreateDefaults.location : "";
   form.description = "";
   form.categoryId = categories.value[0]?.id || "";
   form.userId = auth.user.value?.id || participants.value[0]?.user.id || "";
@@ -175,7 +181,7 @@ function resetForm() {
 }
 
 function openCreateDialog() {
-  resetForm();
+  resetForm({ preserveRecent: true });
   editorOpen.value = true;
 }
 
@@ -273,10 +279,12 @@ async function submitExpense() {
     } else {
       const created = await api.post<Expense, Record<string, unknown>>("/expenses", payload);
       expenses.value = [hydrateExpense(created), ...expenses.value];
+      lastCreateDefaults.currency = payload.currency;
+      lastCreateDefaults.location = payload.location;
     }
 
     editorOpen.value = false;
-    resetForm();
+    resetForm({ preserveRecent: true });
   } catch (error: any) {
     formErrorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to save expense";
   } finally {
