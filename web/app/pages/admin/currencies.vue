@@ -138,9 +138,13 @@ async function importCurrencies() {
 }
 
 const filteredCurrencies = computed(() => {
-  const query = search.value.trim().toUpperCase();
+  const query = search.value.trim().toLowerCase();
 
-  return currencies.value.filter((currency) => !query || currency.name.includes(query));
+  return currencies.value.filter((currency) => (
+    !query ||
+    currency.name.toLowerCase().includes(query) ||
+    currency.displayName.toLowerCase().includes(query)
+  ));
 });
 
 function formatFactor(factor: number) {
@@ -191,7 +195,7 @@ onMounted(loadCurrencies);
         <template v-else>
           <v-text-field
             v-model="search"
-            label="Search ISO code"
+            label="Search code or name"
             prepend-inner-icon="mdi-magnify"
             hide-details
             class="mb-4"
@@ -237,7 +241,7 @@ onMounted(loadCurrencies);
             No currencies yet.
           </v-alert>
           <v-alert v-else-if="!filteredCurrencies.length" type="info" variant="tonal" class="mt-4">
-            No currencies match the current ISO code search.
+            No currencies match the current search.
           </v-alert>
         </template>
       </v-card>
