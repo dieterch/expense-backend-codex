@@ -29,6 +29,7 @@ type Expense = {
 const api = useApi();
 const loading = ref(true);
 const exporting = ref(false);
+const showCategoryBreakdown = ref(false);
 const errorMessage = ref("");
 const expenses = ref<Expense[]>([]);
 const search = ref("");
@@ -87,7 +88,7 @@ const totalAmount = computed(() => filteredExpenses.value.reduce((sum, expense) 
 const uniqueTrips = computed(() => new Set(filteredExpenses.value.map((expense) => expense.trip?.id).filter(Boolean)).size);
 const uniquePayers = computed(() => new Set(filteredExpenses.value.map((expense) => expense.user?.id).filter(Boolean)).size);
 
-const topCategories = computed(() => {
+const categorySummaries = computed(() => {
   const totals = filteredExpenses.value.reduce<Record<string, number>>((result, expense) => {
     const key = expense.category?.name || "Uncategorized";
     result[key] = (result[key] || 0) + getExpenseDisplayAmount(expense);
@@ -95,10 +96,15 @@ const topCategories = computed(() => {
   }, {});
 
   return Object.entries(totals)
-    .map(([name, amount]) => ({ name, amount }))
-    .sort((left, right) => right.amount - left.amount)
-    .slice(0, 3);
+    .map(([name, amount]) => ({
+      name,
+      amount,
+      percentage: totalAmount.value > 0 ? (amount / totalAmount.value) * 100 : 0,
+    }))
+    .sort((left, right) => right.amount - left.amount);
 });
+
+const topCategories = computed(() => categorySummaries.value.slice(0, 3));
 
 async function exportExpenses() {
   exporting.value = true;
@@ -197,7 +203,8 @@ onMounted(loadExpenses);
           </v-col>
         </v-row>
 
-        <div class="d-flex flex-wrap ga-2 mt-4">
+        <div class="d-flex flex-wrap justify-space-between align-center ga-3 mt-4">
+          <div class="d-flex flex-wrap ga-2">
           <v-chip
             v-for="entry in topCategories"
             :key="entry.name"
@@ -209,6 +216,34 @@ onMounted(loadExpenses);
           <v-chip v-if="!topCategories.length" variant="outlined">
             No category totals yet
           </v-chip>
+          </div>
+          <v-btn
+            variant="text"
+            color="secondary"
+            :prepend-icon="showCategoryBreakdown ? 'mdi-table-eye-off' : 'mdi-table-eye'"
+            @click="showCategoryBreakdown = !showCategoryBreakdown"
+          >
+            {{ showCategoryBreakdown ? "Hide category summary" : "Show category summary" }}
+          </v-btn>
+        </div>
+
+        <div v-if="showCategoryBreakdown && categorySummaries.length" class="table-shell mt-4">
+          <v-table density="comfortable">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th class="text-right">EUR total</th>
+                <th class="text-right">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="entry in categorySummaries" :key="entry.name">
+                <td>{{ entry.name }}</td>
+                <td class="text-right">EUR {{ entry.amount.toFixed(2) }}</td>
+                <td class="text-right">{{ entry.percentage.toFixed(1) }}%</td>
+              </tr>
+            </tbody>
+          </v-table>
         </div>
       </v-card>
 
