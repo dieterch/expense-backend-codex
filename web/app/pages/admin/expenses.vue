@@ -217,7 +217,7 @@ onMounted(loadExpenses);
 
         <template v-else>
           <div class="desktop-table-only table-shell">
-            <v-table>
+            <v-table class="admin-expenses-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -326,6 +326,10 @@ onMounted(loadExpenses);
 </template>
 
 <style scoped>
+.admin-expenses-table {
+  min-width: 78rem;
+}
+
 .eur-view-column {
   min-width: 11.5rem;
 }
