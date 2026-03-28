@@ -427,7 +427,7 @@ onMounted(loadTrip);
                     Starts {{ new Date(trip.startDate).toLocaleDateString() }}
                   </div>
                 </div>
-                <v-sheet color="primary" rounded="xl" class="pa-4 text-white trip-total-sheet">
+                <v-sheet color="primary" rounded="xl" class="pa-4 text-white">
                   <div class="trip-total-row">
                     <div class="text-caption text-uppercase">Tracked total</div>
                     <div class="text-h4">€ {{ totalAmount }}</div>
@@ -750,10 +750,6 @@ onMounted(loadTrip);
 </template>
 
 <style scoped>
-.trip-total-sheet {
-  min-width: 22rem;
-}
-
 .trip-total-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -764,11 +760,5 @@ onMounted(loadTrip);
 
 .trip-total-row-secondary {
   margin-top: 1rem;
-}
-
-@media (max-width: 700px) {
-  .trip-total-sheet {
-    min-width: 100%;
-  }
 }
 </style>
