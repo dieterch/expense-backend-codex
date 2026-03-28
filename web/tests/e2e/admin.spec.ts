@@ -70,6 +70,7 @@ test("admin can manage trips, users, categories, and currencies", async ({ page 
   await expect(page).toHaveURL(/\/admin\/currencies$/);
   await page.getByRole("button", { name: "Add currency" }).click();
   await page.getByLabel("Code").fill(currencyCode);
+  await page.getByLabel("Currency name").fill(`Currency ${currencyCode}`);
   await page.getByLabel("Symbol").fill(currencyCode);
   await page.getByLabel("Factor").fill("1.2345");
   await page.getByRole("button", { name: "Create currency" }).click();

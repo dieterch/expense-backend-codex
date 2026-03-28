@@ -7,6 +7,7 @@ import CurrencyEditorDialog from "~/components/admin/CurrencyEditorDialog.vue";
 
 type Currency = {
   name: string;
+  displayName: string;
   symbol: string;
   factor: number;
 };
@@ -25,6 +26,7 @@ const currencies = ref<Currency[]>([]);
 
 const form = reactive({
   name: "",
+  displayName: "",
   symbol: "",
   factor: 1,
 });
@@ -45,6 +47,7 @@ async function loadCurrencies() {
 
 function resetForm() {
   form.name = "";
+  form.displayName = "";
   form.symbol = "";
   form.factor = 1;
   editingName.value = null;
@@ -58,6 +61,7 @@ function openCreateDialog() {
 function openEditDialog(currency: Currency) {
   editingName.value = currency.name;
   form.name = currency.name;
+  form.displayName = currency.displayName;
   form.symbol = currency.symbol;
   form.factor = currency.factor;
   dialogOpen.value = true;
@@ -72,6 +76,7 @@ async function saveCurrency() {
     if (editingName.value) {
       const updated = await api.put<Currency, Record<string, unknown>>("/currency", {
         name: editingName.value,
+        displayName: form.displayName.trim(),
         symbol: form.symbol.trim(),
         factor: Number(form.factor),
       });
@@ -79,6 +84,7 @@ async function saveCurrency() {
     } else {
       const created = await api.post<Currency, Record<string, unknown>>("/currency", {
         name: form.name.trim().toUpperCase(),
+        displayName: form.displayName.trim(),
         symbol: form.symbol.trim(),
         factor: Number(form.factor),
       });
@@ -195,6 +201,7 @@ onMounted(loadCurrencies);
             <thead>
               <tr>
                 <th>Code</th>
+                <th>Name</th>
                 <th>Symbol</th>
                 <th class="text-right">Factor</th>
                 <th class="text-right">Actions</th>
@@ -203,6 +210,7 @@ onMounted(loadCurrencies);
             <tbody>
               <tr v-for="currency in filteredCurrencies" :key="currency.name">
                 <td>{{ currency.name }}</td>
+                <td>{{ currency.displayName }}</td>
                 <td>{{ currency.symbol }}</td>
                 <td class="text-right">{{ formatFactor(currency.factor) }}</td>
                 <td class="text-right">

@@ -81,10 +81,12 @@ async function main() {
     where: { name: defaults.currencyName },
     create: {
       name: defaults.currencyName,
+      displayName: "Euro",
       symbol: defaults.currencySymbol,
       factor: 1,
     },
     update: {
+      displayName: "Euro",
       symbol: defaults.currencySymbol,
     },
     select: {
@@ -96,10 +98,12 @@ async function main() {
     where: { name: "USD" },
     create: {
       name: "USD",
+      displayName: "United States Dollar",
       symbol: "$",
       factor: 1.08,
     },
     update: {
+      displayName: "United States Dollar",
       symbol: "$",
       factor: 1.08,
     },

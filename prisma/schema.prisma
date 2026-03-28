@@ -94,8 +94,9 @@ model Category {
 
 model Currency {
   // name entspricht dem bisherigen `currency`-Feld in Expense
-  name    String    @id
-  symbol  String
-  factor  Float
-  expenses Expense[] // Gegen-Relation zur Expense.currencyRef
+  name        String    @id
+  displayName String
+  symbol      String
+  factor      Float
+  expenses    Expense[] // Gegen-Relation zur Expense.currencyRef
 }

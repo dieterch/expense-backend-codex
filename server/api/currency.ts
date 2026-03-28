@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
       return await (prisma as any).currency.findMany({
         select: {
           name: true,
+          displayName: true,
           symbol: true,
           factor: true,
         },
@@ -26,6 +27,7 @@ export default defineEventHandler(async (event) => {
       return await (prisma as any).currency.create({
         data: {
           name: requireString(body.name, "name"),
+          displayName: requireString(body.displayName, "displayName"),
           symbol: requireString(body.symbol, "symbol"),
           factor: requireNumber(body.factor, "factor"),
         },
@@ -37,6 +39,7 @@ export default defineEventHandler(async (event) => {
       return await (prisma as any).currency.update({
         where: { name: requireString(body.name, "name") },
         data: {
+          displayName: requireString(body.displayName, "displayName"),
           symbol: requireString(body.symbol, "symbol"),
           factor: requireNumber(body.factor, "factor"),
         },

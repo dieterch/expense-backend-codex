@@ -1,6 +1,7 @@
 <script setup lang="ts">
 type CurrencyFormState = {
   name: string;
+  displayName: string;
   symbol: string;
   factor: number;
 };
@@ -44,6 +45,12 @@ const emit = defineEmits<{
           :disabled="isEditing"
         />
         <v-text-field
+          v-model="form.displayName"
+          label="Currency name"
+          prepend-inner-icon="mdi-card-text-outline"
+          class="mb-3"
+        />
+        <v-text-field
           v-model="form.symbol"
           label="Symbol"
           prepend-inner-icon="mdi-format-letter-case"
@@ -67,7 +74,7 @@ const emit = defineEmits<{
             type="submit"
             color="secondary"
             :loading="saving"
-            :disabled="!form.name.trim() || !form.symbol.trim() || form.factor <= 0"
+            :disabled="!form.name.trim() || !form.displayName.trim() || !form.symbol.trim() || form.factor <= 0"
           >
             {{ submitLabel }}
           </v-btn>

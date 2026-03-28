@@ -89,6 +89,12 @@ before(async () => {
     },
   });
 
+  try {
+    await prisma.$executeRawUnsafe('ALTER TABLE "Currency" ADD COLUMN "displayName" TEXT NOT NULL DEFAULT \'\'');
+  } catch {
+    // test database may already include the additive column
+  }
+
   await prisma.expense.deleteMany();
   await prisma.tripShare.deleteMany();
   await prisma.tripUser.deleteMany();
@@ -162,6 +168,7 @@ before(async () => {
   const currency = await prisma.currency.create({
     data: {
       name: "EUR",
+      displayName: "Euro",
       symbol: "EUR",
       factor: 1,
     },
@@ -170,6 +177,7 @@ before(async () => {
   await prisma.currency.create({
     data: {
       name: "USD",
+      displayName: "United States Dollar",
       symbol: "$",
       factor: 1.08,
     },

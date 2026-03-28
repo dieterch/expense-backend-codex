@@ -47,10 +47,12 @@ test("importCurrenciesFromFrankfurter normalizes iso codes and symbols", async (
         return new Response(JSON.stringify([
           {
             iso_code: " eur ",
+            name: "Euro",
             symbol: "€",
           },
           {
             iso_code: "usd",
+            name: "United States Dollar",
             symbol: "",
           },
         ]), {
@@ -83,11 +85,13 @@ test("importCurrenciesFromFrankfurter normalizes iso codes and symbols", async (
   assert.deepEqual(result, [
     {
       name: "EUR",
+      displayName: "Euro",
       symbol: "€",
       factor: 1,
     },
     {
       name: "USD",
+      displayName: "United States Dollar",
       symbol: "USD",
       factor: 1 / 1.08,
     },

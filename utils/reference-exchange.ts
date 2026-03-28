@@ -15,6 +15,7 @@ type HistoricalRatePayload = Array<{
 
 type FrankfurterCurrencyPayload = Array<{
   iso_code?: string;
+  name?: string;
   symbol?: string;
 }>;
 
@@ -186,6 +187,11 @@ export async function importCurrenciesFromFrankfurter(options?: {
   return payload
     .map((entry) => ({
       name: typeof entry.iso_code === "string" ? normalizeCurrencyCode(entry.iso_code) : "",
+      displayName: typeof entry.name === "string" && entry.name.trim().length > 0
+        ? entry.name.trim()
+        : typeof entry.iso_code === "string"
+          ? normalizeCurrencyCode(entry.iso_code)
+          : "",
       symbol: typeof entry.symbol === "string" && entry.symbol.trim().length > 0
         ? entry.symbol.trim()
         : typeof entry.iso_code === "string"

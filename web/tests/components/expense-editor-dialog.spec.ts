@@ -11,7 +11,7 @@ describe("expense editor dialog", () => {
     title: "Add expense",
     submitLabel: "Create expense",
     categories: [{ id: "cat-1", name: "Meals", icon: "mdi-food" }],
-    currencies: [{ name: "EUR", symbol: "EUR", factor: 1 }],
+    currencies: [{ name: "EUR", displayName: "Euro", symbol: "EUR", factor: 1 }],
     participants: [
       {
         user: {

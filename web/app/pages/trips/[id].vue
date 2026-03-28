@@ -64,6 +64,7 @@ type Category = {
 
 type Currency = {
   name: string;
+  displayName?: string;
   symbol: string;
   factor: number;
 };
