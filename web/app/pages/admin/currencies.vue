@@ -18,6 +18,7 @@ const importing = ref(false);
 const deletingId = ref<string | null>(null);
 const errorMessage = ref("");
 const successMessage = ref("");
+const search = ref("");
 const dialogOpen = ref(false);
 const editingName = ref<string | null>(null);
 const currencies = ref<Currency[]>([]);
@@ -130,6 +131,16 @@ async function importCurrencies() {
   }
 }
 
+const filteredCurrencies = computed(() => {
+  const query = search.value.trim().toUpperCase();
+
+  return currencies.value.filter((currency) => !query || currency.name.includes(query));
+});
+
+function formatFactor(factor: number) {
+  return factor.toFixed(3);
+}
+
 onMounted(loadCurrencies);
 </script>
 
@@ -172,6 +183,14 @@ onMounted(loadCurrencies);
         <v-skeleton-loader v-if="loading" type="table-heading, table-tbody" />
 
         <template v-else>
+          <v-text-field
+            v-model="search"
+            label="Search ISO code"
+            prepend-inner-icon="mdi-magnify"
+            hide-details
+            class="mb-4"
+          />
+
           <v-table>
             <thead>
               <tr>
@@ -182,10 +201,10 @@ onMounted(loadCurrencies);
               </tr>
             </thead>
             <tbody>
-              <tr v-for="currency in currencies" :key="currency.name">
+              <tr v-for="currency in filteredCurrencies" :key="currency.name">
                 <td>{{ currency.name }}</td>
                 <td>{{ currency.symbol }}</td>
-                <td class="text-right">{{ currency.factor }}</td>
+                <td class="text-right">{{ formatFactor(currency.factor) }}</td>
                 <td class="text-right">
                   <div class="d-inline-flex ga-2">
                     <v-btn size="small" variant="tonal" color="primary" @click="openEditDialog(currency)">
@@ -208,6 +227,9 @@ onMounted(loadCurrencies);
 
           <v-alert v-if="!currencies.length" type="info" variant="tonal" class="mt-4">
             No currencies yet.
+          </v-alert>
+          <v-alert v-else-if="!filteredCurrencies.length" type="info" variant="tonal" class="mt-4">
+            No currencies match the current ISO code search.
           </v-alert>
         </template>
       </v-card>
