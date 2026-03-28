@@ -445,13 +445,13 @@ onMounted(loadTrip);
                   :key="participant.user.id"
                   variant="outlined"
                 >
-                  {{ participant.user.name }} · x{{ (participant.user.settlementFactor || 1).toFixed(2) }}
+                  {{ participant.user.name }}
                 </v-chip>
                 <v-btn
                   variant="tonal"
                   color="secondary"
                   prepend-icon="mdi-chart-donut"
-                  class="ml-auto"
+                  class="ml-auto trip-action-inline"
                   @click="statsOpen = true"
                 >
                   Statistics
@@ -460,6 +460,7 @@ onMounted(loadTrip);
                   variant="tonal"
                   color="secondary"
                   prepend-icon="mdi-scale-balance"
+                  class="trip-action-inline"
                   @click="settlementOpen = true"
                 >
                   Settlement
@@ -469,6 +470,7 @@ onMounted(loadTrip);
                   variant="tonal"
                   color="secondary"
                   prepend-icon="mdi-tune-vertical"
+                  class="trip-action-inline"
                   @click="openEstimationSettingsDialog"
                 >
                   Estimation
@@ -760,5 +762,9 @@ onMounted(loadTrip);
 
 .trip-total-row-secondary {
   margin-top: 1rem;
+}
+
+.trip-action-inline {
+  white-space: nowrap;
 }
 </style>
