@@ -427,13 +427,14 @@ onMounted(loadTrip);
                     Starts {{ new Date(trip.startDate).toLocaleDateString() }}
                   </div>
                 </div>
-                <v-sheet color="primary" rounded="xl" class="pa-4 text-white">
-                  <div class="text-caption text-uppercase mb-1">
-                    {{ hasForeignCurrencyExpenses ? "Tracked total (EUR ref)" : "Tracked total" }}
+                <v-sheet color="primary" rounded="xl" class="pa-4 text-white trip-total-sheet">
+                  <div class="trip-total-row">
+                    <div class="text-caption text-uppercase">Tracked total</div>
+                    <div class="text-h4">€ {{ totalAmount }}</div>
                   </div>
-                  <div class="text-h4">€ {{ totalAmount }}</div>
-                  <div v-if="hasForeignCurrencyExpenses" class="text-caption mt-2">
-                    Estimated bank total € {{ estimatedTripTotal }}
+                  <div v-if="hasForeignCurrencyExpenses" class="trip-total-row trip-total-row-secondary">
+                    <div class="text-caption text-uppercase">Estimated bank total</div>
+                    <div class="text-h6">€ {{ estimatedTripTotal }}</div>
                   </div>
                 </v-sheet>
               </div>
@@ -747,3 +748,27 @@ onMounted(loadTrip);
     {{ formErrorMessage }}
   </v-snackbar>
 </template>
+
+<style scoped>
+.trip-total-sheet {
+  min-width: 22rem;
+}
+
+.trip-total-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 1.5rem;
+  row-gap: 0.25rem;
+}
+
+.trip-total-row-secondary {
+  margin-top: 1rem;
+}
+
+@media (max-width: 700px) {
+  .trip-total-sheet {
+    min-width: 100%;
+  }
+}
+</style>
