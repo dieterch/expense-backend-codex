@@ -35,11 +35,18 @@ describe("expense editor dialog", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("fetch", vi.fn());
     vi.stubGlobal("visualViewport", {
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       width: 1280,
       height: 720,
+    });
+    vi.stubGlobal("navigator", {
+      geolocation: {
+        getCurrentPosition: vi.fn(),
+      },
+      language: "en-US",
     });
   });
 
@@ -83,5 +90,56 @@ describe("expense editor dialog", () => {
 
     expect(wrapper.emitted("submit")).toBeTruthy();
     expect(wrapper.text()).toContain("Paying as");
+  });
+
+  it("autofills location when the dialog opens with an empty location", async () => {
+    const getCurrentPosition = vi.fn((resolve: (value: GeolocationPosition) => void) => {
+      resolve({
+        coords: {
+          latitude: 48.2082,
+          longitude: 16.3738,
+        },
+      } as GeolocationPosition);
+    });
+    vi.stubGlobal("navigator", {
+      geolocation: {
+        getCurrentPosition,
+      },
+      language: "en-US",
+    });
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
+      locality: "Innere Stadt",
+      city: "Vienna",
+      principalSubdivision: "Vienna",
+      countryName: "Austria",
+    }), {
+      status: 200,
+      headers: {
+        "content-type": "application/json",
+      },
+    })));
+
+    const wrapper = await mountSuspended(ExpenseEditorDialog, {
+      props: {
+        ...baseProps,
+        form: {
+          ...baseProps.form,
+          location: "",
+        },
+        isAdmin: false,
+      },
+      global: {
+        stubs: {
+          VDialog: {
+            props: ["modelValue"],
+            template: "<div><slot /></div>",
+          },
+        },
+      },
+    });
+
+    await vi.waitFor(() => {
+      expect((wrapper.props("form") as any).location).toBe("Innere Stadt, Vienna, Austria");
+    });
   });
 });

@@ -30,6 +30,13 @@ type ExpenseFormState = {
   userId: string;
 };
 
+type ReverseGeocodePayload = {
+  city?: string;
+  locality?: string;
+  principalSubdivision?: string;
+  countryName?: string;
+};
+
 const props = defineProps<{
   modelValue: boolean;
   saving: boolean;
@@ -48,6 +55,10 @@ const emit = defineEmits<{
   submit: [];
 }>();
 
+const isLocating = ref(false);
+const locationHint = ref("");
+let locationRequestId = 0;
+
 const isValid = computed(() =>
   props.form.amount > 0 &&
   Boolean(props.form.currency) &&
@@ -64,6 +75,84 @@ function closeDialog() {
 function submit() {
   emit("submit");
 }
+
+function buildLocationLabel(payload: ReverseGeocodePayload) {
+  const parts = [
+    payload.locality,
+    payload.city,
+    payload.principalSubdivision,
+    payload.countryName,
+  ].filter((value, index, values) => Boolean(value) && values.indexOf(value) === index);
+
+  return parts.slice(0, 3).join(", ");
+}
+
+async function autofillLocation() {
+  if (!process.client || isLocating.value) {
+    return;
+  }
+
+  if (!("geolocation" in navigator)) {
+    locationHint.value = "Location autofill is unavailable in this browser.";
+    return;
+  }
+
+  const requestId = ++locationRequestId;
+  isLocating.value = true;
+  locationHint.value = "Deriving your current location...";
+
+  try {
+    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 300000,
+      });
+    });
+
+    const language = navigator.language?.split("-")[0] || "en";
+    const url = new URL("https://api.bigdatacloud.net/data/reverse-geocode-client");
+    url.searchParams.set("latitude", String(position.coords.latitude));
+    url.searchParams.set("longitude", String(position.coords.longitude));
+    url.searchParams.set("localityLanguage", language);
+
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Reverse geocoding failed");
+    }
+
+    const payload = await response.json() as ReverseGeocodePayload;
+    const derivedLocation = buildLocationLabel(payload);
+
+    if (!derivedLocation) {
+      throw new Error("Reverse geocoding returned no usable location");
+    }
+
+    if (requestId === locationRequestId && !props.form.location.trim()) {
+      props.form.location = derivedLocation;
+    }
+
+    locationHint.value = "";
+  } catch {
+    locationHint.value = "Unable to determine your current location automatically.";
+  } finally {
+    if (requestId === locationRequestId) {
+      isLocating.value = false;
+    }
+  }
+}
+
+watch(() => props.modelValue, (isOpen) => {
+  if (!isOpen) {
+    locationHint.value = "";
+    isLocating.value = false;
+    return;
+  }
+
+  if (!props.form.location.trim()) {
+    void autofillLocation();
+  }
+}, { immediate: true });
 </script>
 
 <template>
@@ -138,7 +227,12 @@ function submit() {
           v-model="form.location"
           label="Location"
           prepend-inner-icon="mdi-map-marker-outline"
+          append-inner-icon="mdi-crosshairs-gps"
+          :loading="isLocating"
+          :hint="locationHint"
+          persistent-hint
           class="mb-3"
+          @click:append-inner="autofillLocation"
         />
         <v-textarea
           v-model="form.description"
