@@ -55,6 +55,7 @@ Frontend:
   - expense create/edit/delete
   - selected-trip persistence
   - trip stats dialog
+  - weighted settlement dialog
   - admin trip create/edit/delete
   - participant selection during trip create/edit
 - admin flows are implemented:
@@ -63,12 +64,22 @@ Frontend:
   - currencies CRUD
   - all-expenses reporting
   - XLSX export
+- settlement weighting is implemented:
+  - each user has a `settlementFactor`
+  - trip settlement computes weighted target share per participant
+  - settlement dialog proposes balancing payments between debtors and creditors
 - FX support is implemented in trip UI:
   - foreign-currency expenses show reference EUR conversion
   - when historical reference FX is missing, the UI falls back to the configured manual exchange rate
   - the EUR view was simplified to the minimum:
     - no `xxxx cents` display under expense amounts
     - only the EUR amount plus a short exchange-rate source line remain
+- trip expense dialogs were improved:
+  - last used currency and location are remembered for the next created expense
+  - browser geolocation can autofill location
+  - Firefox/local-network geolocation caveat is relevant:
+    - geolocation works on `localhost`
+    - plain `http://<LAN-IP>:3000` may be blocked as a non-secure context
 - configurable bank-cost estimation is implemented:
   - local persisted settings in browser
   - default markup
@@ -76,6 +87,18 @@ Frontend:
   - weekend surcharge field
   - per-currency override support
   - estimated EUR total shown beside reference EUR
+- currency administration/import is expanded:
+  - admin currencies page can import from Frankfurter
+  - import stores `displayName`, `symbol`, and derived `factor` from Frankfurter EUR rates
+  - currencies have persisted `enabled` state
+  - trip expense dialogs only offer enabled currencies
+  - after refresh/backfill, only currencies actually used by expenses are enabled by default
+  - newly imported currencies default to disabled until explicitly enabled
+- admin expense reporting is expanded:
+  - totals and category summaries use normalized EUR amounts
+  - payer filter exists
+  - optional category breakdown table exists
+  - amount column shows compact EUR subline only when original currency is non-EUR
 - estimator calibration from `ausgaben.xlsx` is implemented and documented
 - category icons are rendered in trip/admin views
 - MDI font icons are loaded and legacy icon names are normalized for display
@@ -122,10 +145,16 @@ Important files for current state:
 - `web/app/pages/trips/[id].vue`
 - `web/app/pages/trips/index.vue`
 - `web/app/pages/admin/expenses.vue`
+- `web/app/pages/admin/currencies.vue`
+- `web/app/pages/admin/users.vue`
 - `web/app/components/admin/TripEditorDialog.vue`
+- `web/app/components/admin/CurrencyEditorDialog.vue`
+- `web/app/components/admin/UserEditorDialog.vue`
 - `web/app/components/shared/CategoryIcon.vue`
+- `web/app/components/trip/ExpenseEditorDialog.vue`
 - `web/app/components/trip/ExpenseReferenceSummary.vue`
 - `web/app/components/trip/EstimationSettingsDialog.vue`
+- `web/app/components/trip/TripSettlementDialog.vue`
 - `web/app/composables/useApi.ts`
 - `web/app/composables/useAuth.ts`
 - `web/app/composables/useEstimationSettings.ts`
@@ -136,12 +165,13 @@ Important files for current state:
 - `web/app/utils/expense-estimation.ts`
 - `web/app/utils/expense-estimation-calibration.ts`
 - `web/app/utils/expense-reference.ts`
+- `web/app/utils/trip-settlement.ts`
 - `web/app/utils/themes.ts`
 - `web/estimation-calibration.md`
 
 Testing status:
 - `npm run test` passes
-- `npm --prefix web run test` passes
+- `npm --prefix web run test` has passed previously, but Nuxt/Vitest should be run through the repo's existing setup; ad-hoc direct `npx vitest` calls can fail on Nuxt runtime imports
 - `npm run web:build` passes
 - `npm run test:e2e` in `web/` passes
 
@@ -150,18 +180,17 @@ Important workflow note:
 - parallel runs can collide on Nuxt generated artifacts and produce false failures
 
 Recent meaningful commits:
-- `7a201fc` Simplify the trip expense EUR view
-- `aac4762` Use drawer navigation for tablet-width app bars
-- `c175cd6` Simplify the app bar on tablet layouts
-- `f527cad` Add five selectable frontend themes
-- `bd3252f` Make frontend API base work on LAN devices
-- `a0628ee` Widen the login form layout
-- `f070a92` Fix wide-screen page wrap sizing
-- `2638900` Expose the frontend dev host
-- `bd5de1a` Fix trip expense responsiveness and trim FX copy
-- `d5581e5` Track Nuxt test utils config
-- `c6df91e` Load MDI font icons in the web app
-- `687c6d9` Add manual FX fallback and normalize category icons
+- `c6d94d2` Improve geolocation error hints in expense dialog
+- `015281c` Backfill enabled currencies from expense usage
+- `c64e888` Add selectable currencies for trip expense dialogs
+- `44238c4` Remember recent trip expense currency and location
+- `ddc3f45` Tighten trip action row and participant chips
+- `b9f52d8` Keep trip total card footprint while aligning rows
+- `f2c5ecc` Align trip total card rows
+- `5a35bea` Revert "Refine trip header summary and action layout"
+- `dd28b81` Add weighted trip settlement workflow
+- `53725ba` Add payer filter to admin expenses
+- `1266427` Add toggleable admin category breakdown
 
 Local/dev notes:
 - Local dev bootstrap exists:
@@ -175,6 +204,10 @@ Local/dev notes:
 - for LAN testing on devices like iPad:
   - frontend should be opened via your machine's LAN IP, not `localhost`
   - backend also needs to be running on `0.0.0.0:5678`
+- for browser geolocation in the expense dialog:
+  - `localhost` works in Firefox
+  - `http://<LAN-IP>:3000` may not work because Firefox can treat it as a non-secure context for Geolocation API
+  - if geolocation seems broken, retry on `http://localhost:3000` before debugging app code
 
 Important working conventions:
 
@@ -194,6 +227,7 @@ Status:
   - historical FX reference support is implemented
   - configurable bank-cost estimation is implemented
   - manual FX fallback is implemented in the UI when historical reference data is missing
+  - weighted settlement is implemented in the trip UI
   - actual booked EUR reconciliation/prediction-error follow-up is still an open next frontier
 - repo should be clean before starting new work
 
