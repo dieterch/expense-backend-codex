@@ -34,6 +34,7 @@ const errorMessage = ref("");
 const expenses = ref<Expense[]>([]);
 const search = ref("");
 const tripFilter = ref("all");
+const payerFilter = ref("all");
 const categoryFilter = ref("all");
 
 async function loadExpenses() {
@@ -63,6 +64,13 @@ const categoryOptions = computed(() => [
     .map((name) => ({ title: name as string, value: name as string })),
 ]);
 
+const payerOptions = computed(() => [
+  { title: "All payers", value: "all" },
+  ...Array.from(new Set(expenses.value.map((expense) => expense.user?.name).filter(Boolean)))
+    .sort()
+    .map((name) => ({ title: name as string, value: name as string })),
+]);
+
 const filteredExpenses = computed(() => {
   const query = search.value.trim().toLowerCase();
 
@@ -78,9 +86,10 @@ const filteredExpenses = computed(() => {
     ].some((value) => value?.toLowerCase().includes(query));
 
     const matchesTrip = tripFilter.value === "all" || expense.trip?.name === tripFilter.value;
+    const matchesPayer = payerFilter.value === "all" || expense.user?.name === payerFilter.value;
     const matchesCategory = categoryFilter.value === "all" || expense.category?.name === categoryFilter.value;
 
-    return matchesQuery && matchesTrip && matchesCategory;
+    return matchesQuery && matchesTrip && matchesPayer && matchesCategory;
   }).sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
 });
 
@@ -173,7 +182,7 @@ onMounted(loadExpenses);
 
       <v-card color="surface" class="pa-4 pa-md-6 mb-6">
         <v-row>
-          <v-col cols="12" md="6" lg="4">
+          <v-col cols="12" md="6" lg="3">
             <v-text-field
               v-model="search"
               label="Search report"
@@ -181,7 +190,7 @@ onMounted(loadExpenses);
               hide-details
             />
           </v-col>
-          <v-col cols="12" md="6" lg="4">
+          <v-col cols="12" md="6" lg="3">
             <v-select
               v-model="tripFilter"
               label="Trip"
@@ -191,7 +200,17 @@ onMounted(loadExpenses);
               hide-details
             />
           </v-col>
-          <v-col cols="12" md="6" lg="4">
+          <v-col cols="12" md="6" lg="3">
+            <v-select
+              v-model="payerFilter"
+              label="Payer"
+              :items="payerOptions"
+              item-title="title"
+              item-value="value"
+              hide-details
+            />
+          </v-col>
+          <v-col cols="12" md="6" lg="3">
             <v-select
               v-model="categoryFilter"
               label="Category"
