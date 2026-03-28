@@ -37,10 +37,8 @@ export function buildExpenseReferenceSummary(expense: ExpenseReferenceLike) {
     Number.isFinite(expense.manualRate) &&
     expense.manualRate > 0
   ) {
-    const provider = expense.manualRateProvider || "Configured manual exchange rate";
-
     return {
-      headline: `${provider} (${expense.currency} ${expense.manualRate.toFixed(4)} EUR)`,
+      headline: `(${expense.currency} = ${expense.manualRate.toFixed(4)} EUR)`,
       detail: "",
     };
   }
@@ -56,10 +54,8 @@ export function buildExpenseReferenceSummary(expense: ExpenseReferenceLike) {
     };
   }
 
-  const provider = expense.referenceRateProvider ? `${expense.referenceRateProvider} exchange rate` : "Reference exchange rate";
-
   return {
-    headline: `${provider} (${expense.currency} ${expense.referenceRate.toFixed(4)} EUR)`,
+    headline: `(${expense.currency} = ${expense.referenceRate.toFixed(4)} EUR)`,
     detail: "",
   };
 }
