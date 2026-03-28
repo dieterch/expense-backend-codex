@@ -83,14 +83,14 @@ const filteredExpenses = computed(() => {
   }).sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
 });
 
-const totalAmount = computed(() => filteredExpenses.value.reduce((sum, expense) => sum + expense.amount, 0));
+const totalAmount = computed(() => filteredExpenses.value.reduce((sum, expense) => sum + getExpenseDisplayAmount(expense), 0));
 const uniqueTrips = computed(() => new Set(filteredExpenses.value.map((expense) => expense.trip?.id).filter(Boolean)).size);
 const uniquePayers = computed(() => new Set(filteredExpenses.value.map((expense) => expense.user?.id).filter(Boolean)).size);
 
 const topCategories = computed(() => {
   const totals = filteredExpenses.value.reduce<Record<string, number>>((result, expense) => {
     const key = expense.category?.name || "Uncategorized";
-    result[key] = (result[key] || 0) + expense.amount;
+    result[key] = (result[key] || 0) + getExpenseDisplayAmount(expense);
     return result;
   }, {});
 
