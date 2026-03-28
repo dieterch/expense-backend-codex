@@ -14,8 +14,10 @@ type Currency = {
 const api = useApi();
 const loading = ref(true);
 const saving = ref(false);
+const importing = ref(false);
 const deletingId = ref<string | null>(null);
 const errorMessage = ref("");
+const successMessage = ref("");
 const dialogOpen = ref(false);
 const editingName = ref<string | null>(null);
 const currencies = ref<Currency[]>([]);
@@ -29,9 +31,10 @@ const form = reactive({
 async function loadCurrencies() {
   loading.value = true;
   errorMessage.value = "";
+  successMessage.value = "";
 
   try {
-    currencies.value = await api.get<Currency[]>("/currency");
+    currencies.value = (await api.get<Currency[]>("/currency")).sort((left, right) => left.name.localeCompare(right.name));
   } catch (error: any) {
     errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to load currencies";
   } finally {
@@ -62,6 +65,7 @@ function openEditDialog(currency: Currency) {
 async function saveCurrency() {
   saving.value = true;
   errorMessage.value = "";
+  successMessage.value = "";
 
   try {
     if (editingName.value) {
@@ -92,6 +96,7 @@ async function saveCurrency() {
 async function deleteCurrency(currency: Currency) {
   deletingId.value = currency.name;
   errorMessage.value = "";
+  successMessage.value = "";
 
   try {
     await api.delete("/currency", { name: currency.name });
@@ -100,6 +105,28 @@ async function deleteCurrency(currency: Currency) {
     errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to delete currency";
   } finally {
     deletingId.value = null;
+  }
+}
+
+async function importCurrencies() {
+  importing.value = true;
+  errorMessage.value = "";
+  successMessage.value = "";
+
+  try {
+    const result = await api.post<{
+      createdCount: number;
+      updatedCount: number;
+      totalCount: number;
+      currencies: Currency[];
+    }, Record<string, never>>("/currency/import", {});
+
+    currencies.value = result.currencies;
+    successMessage.value = `Imported ${result.createdCount} new currencies and refreshed ${result.updatedCount} existing entries.`;
+  } catch (error: any) {
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to import currencies";
+  } finally {
+    importing.value = false;
   }
 }
 
@@ -117,13 +144,28 @@ onMounted(loadCurrencies);
             Maintain the exchange reference table that powers normalized reporting and future FX work.
           </p>
         </div>
-        <v-btn color="secondary" prepend-icon="mdi-currency-usd" @click="openCreateDialog">
-          Add currency
-        </v-btn>
+        <div class="d-flex flex-wrap ga-3">
+          <v-btn
+            color="primary"
+            variant="tonal"
+            prepend-icon="mdi-database-import-outline"
+            :loading="importing"
+            @click="importCurrencies"
+          >
+            Import from Frankfurter
+          </v-btn>
+          <v-btn color="secondary" prepend-icon="mdi-currency-usd" @click="openCreateDialog">
+            Add currency
+          </v-btn>
+        </div>
       </div>
 
       <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-6">
         {{ errorMessage }}
+      </v-alert>
+
+      <v-alert v-if="successMessage" type="success" variant="tonal" class="mb-6">
+        {{ successMessage }}
       </v-alert>
 
       <v-card color="surface" class="pa-4 pa-md-6">

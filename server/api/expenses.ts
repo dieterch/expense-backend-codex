@@ -17,7 +17,7 @@ import {
   requireUuidLikeId,
 } from "../../utils/request-validation";
 import { amountToCents, normalizeExpenseRecord } from "../../utils/money";
-import { resolveExpenseReferenceExchange } from "../../utils/reference-exchange";
+import { backfillExpenseReferenceExchanges, resolveExpenseReferenceExchange } from "../../utils/reference-exchange";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
         },
       });
 
-      return expenses.map(normalizeExpenseRecord);
+      return (await backfillExpenseReferenceExchanges(prisma, expenses)).map(normalizeExpenseRecord);
     }
 
     const body = ensureObjectBody(await readBody(event)); // Verwende readBody statt useBody

@@ -15,7 +15,7 @@ const repoDir = process.cwd();
 const port = 5689;
 const referenceRatePort = 5690;
 const baseUrl = `http://127.0.0.1:${port}`;
-const referenceRateBaseUrl = `http://127.0.0.1:${referenceRatePort}/v1`;
+const referenceRateBaseUrl = `http://127.0.0.1:${referenceRatePort}/v2`;
 const jwtSecret = "integration-test-secret";
 const baseDatabasePath = resolve(repoDir, "prisma/dev.db");
 
@@ -192,22 +192,28 @@ before(async () => {
   referenceRateServer = createServer((request, response) => {
     const url = new URL(request.url || "/", referenceRateBaseUrl);
     const base = url.searchParams.get("base");
-    const symbols = url.searchParams.get("symbols");
+    const quotes = url.searchParams.get("quotes");
+    const date = url.searchParams.get("date");
 
-    if (request.method !== "GET" || !url.pathname.startsWith("/v1/") || base !== "USD" || symbols !== "EUR") {
+    if (
+      request.method !== "GET" ||
+      url.pathname !== "/v2/rates" ||
+      base !== "USD" ||
+      quotes !== "EUR" ||
+      date !== "2025-03-02"
+    ) {
       response.writeHead(404, { "content-type": "application/json" });
       response.end(JSON.stringify({ error: "not found" }));
       return;
     }
 
     response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify({
+    response.end(JSON.stringify([{
       base: "USD",
+      quote: "EUR",
       date: "2025-02-28",
-      rates: {
-        EUR: 0.91,
-      },
-    }));
+      rate: 0.91,
+    }]));
   });
 
   await new Promise<void>((resolve, reject) => {

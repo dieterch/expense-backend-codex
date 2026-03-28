@@ -4,6 +4,7 @@ import { requireTripAccess } from "../../utils/access-control";
 import { normalizeRouteError } from "../../utils/route-error";
 import { ensureObjectBody, requireUuidLikeId } from "../../utils/request-validation";
 import { normalizeExpenseRecord } from "../../utils/money";
+import { backfillExpenseReferenceExchanges } from "../../utils/reference-exchange";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -30,7 +31,7 @@ export default defineEventHandler(async (event) => {
         },
       });
 
-      return expenses.map(normalizeExpenseRecord);
+      return (await backfillExpenseReferenceExchanges(prisma, expenses)).map(normalizeExpenseRecord);
     }
 
     throw createError({ statusCode: 405, statusMessage: "Method not allowed" });
