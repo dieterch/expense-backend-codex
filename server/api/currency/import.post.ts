@@ -23,11 +23,12 @@ export default defineEventHandler(async (event) => {
         },
         update: {
           symbol: currency.symbol,
+          factor: currency.factor || 1,
         },
         create: {
           name: currency.name,
           symbol: currency.symbol,
-          factor: existingByName.get(currency.name)?.factor || currency.factor || 1,
+          factor: currency.factor || 1,
         },
       })),
     );
