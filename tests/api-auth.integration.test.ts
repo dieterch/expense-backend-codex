@@ -95,6 +95,25 @@ before(async () => {
     // test database may already include the additive column
   }
 
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "SettlementPayment" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "amount" REAL NOT NULL,
+      "amountCents" INTEGER NOT NULL,
+      "date" DATETIME NOT NULL,
+      "tripId" TEXT NOT NULL,
+      "fromUserId" TEXT NOT NULL,
+      "toUserId" TEXT NOT NULL,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "SettlementPayment_tripId_fkey" FOREIGN KEY ("tripId") REFERENCES "Trip" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "SettlementPayment_fromUserId_fkey" FOREIGN KEY ("fromUserId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+      CONSTRAINT "SettlementPayment_toUserId_fkey" FOREIGN KEY ("toUserId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )
+  `);
+  await prisma.$executeRawUnsafe('CREATE INDEX IF NOT EXISTS "SettlementPayment_tripId_date_idx" ON "SettlementPayment"("tripId", "date")');
+
+  await prisma.settlementPayment.deleteMany();
   await prisma.expense.deleteMany();
   await prisma.tripShare.deleteMany();
   await prisma.tripUser.deleteMany();
@@ -147,6 +166,13 @@ before(async () => {
   await prisma.tripUser.create({
     data: {
       userId: user.id,
+      tripId: trip.id,
+    },
+  });
+
+  await prisma.tripUser.create({
+    data: {
+      userId: otherUser.id,
       tripId: trip.id,
     },
   });
@@ -453,6 +479,16 @@ test("regular users cannot access another trip's users or expenses", async () =>
     body: JSON.stringify({ id: hiddenTrip.id }),
   });
   assert.equal(hiddenTripExpensesResponse.status, 403);
+
+  const hiddenTripSettlementsResponse = await fetch(`${baseUrl}/api/tripsettlements`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id: hiddenTrip.id }),
+  });
+  assert.equal(hiddenTripSettlementsResponse.status, 403);
 });
 
 test("expense writes and reads expose synced amount and amountCents", async () => {
@@ -726,4 +762,105 @@ test("regular users cannot update another user's expense, but admins can read al
   const adminExpenses = await adminExpensesResponse.json();
   assert.ok(adminExpenses.some((expense: any) => expense.description === "Hidden expense"));
   assert.ok(adminExpenses.some((expense: any) => expense.description === "Lunch"));
+});
+
+test("trip settlement payments can be created, listed, updated, and cancelled", async () => {
+  const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      email: "member@example.com",
+      password: "legacy-password",
+    }),
+  });
+
+  assert.equal(loginResponse.status, 200);
+  const { token } = await loginResponse.json();
+
+  const trip = await prisma.trip.findUniqueOrThrow({
+    where: { name: "Integration Trip" },
+    select: { id: true },
+  });
+  const member = await prisma.user.findUniqueOrThrow({
+    where: { email: "member@example.com" },
+    select: { id: true, name: true },
+  });
+  const otherMember = await prisma.user.findUniqueOrThrow({
+    where: { email: "other@example.com" },
+    select: { id: true, name: true },
+  });
+
+  const createResponse = await fetch(`${baseUrl}/api/tripsettlements`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      tripId: trip.id,
+      fromUserId: member.id,
+      toUserId: otherMember.id,
+      amount: 14.5,
+      date: "2025-03-04T12:00:00.000Z",
+    }),
+  });
+
+  assert.equal(createResponse.status, 200);
+  const createdPayment = await createResponse.json();
+  assert.equal(createdPayment.amount, 14.5);
+  assert.equal(createdPayment.amountCents, 1450);
+  assert.equal(createdPayment.fromUser.name, member.name);
+  assert.equal(createdPayment.toUser.name, otherMember.name);
+
+  const listResponse = await fetch(`${baseUrl}/api/tripsettlements`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id: trip.id }),
+  });
+
+  assert.equal(listResponse.status, 200);
+  const payments = await listResponse.json();
+  assert.equal(payments.length, 1);
+  assert.equal(payments[0].id, createdPayment.id);
+
+  const updateResponse = await fetch(`${baseUrl}/api/tripsettlements`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      id: createdPayment.id,
+      fromUserId: otherMember.id,
+      toUserId: member.id,
+      amount: 9.75,
+      date: "2025-03-05T12:00:00.000Z",
+    }),
+  });
+
+  assert.equal(updateResponse.status, 200);
+  const updatedPayment = await updateResponse.json();
+  assert.equal(updatedPayment.amount, 9.75);
+  assert.equal(updatedPayment.amountCents, 975);
+  assert.equal(updatedPayment.fromUser.name, otherMember.name);
+  assert.equal(updatedPayment.toUser.name, member.name);
+
+  const deleteResponse = await fetch(`${baseUrl}/api/tripsettlements`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id: createdPayment.id }),
+  });
+
+  assert.equal(deleteResponse.status, 200);
+
+  const remainingPayments = await prisma.settlementPayment.findMany({
+    where: { tripId: trip.id },
+  });
+  assert.equal(remainingPayments.length, 0);
 });

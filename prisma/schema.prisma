@@ -14,29 +14,32 @@ generator client {
 }
 
 model User {
-  id               String      @id @default(uuid())
-  email            String      @unique
-  name             String
-  password         String
-  role             String
-  settlementFactor Float       @default(1)
-  trips            TripUser[] // Beziehung zu den Trips
-  expenses         Expense[] // Ausgaben des Nutzers
-  shares           TripShare[] // Anteil an den Gesamtkosten pro Trip
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                         String              @id @default(uuid())
+  email                      String              @unique
+  name                       String
+  password                   String
+  role                       String
+  settlementFactor           Float               @default(1)
+  trips                      TripUser[] // Beziehung zu den Trips
+  expenses                   Expense[] // Ausgaben des Nutzers
+  shares                     TripShare[] // Anteil an den Gesamtkosten pro Trip
+  outgoingSettlementPayments SettlementPayment[] @relation("SettlementPaymentFromUser")
+  incomingSettlementPayments SettlementPayment[] @relation("SettlementPaymentToUser")
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
 }
 
 model Trip {
-  id        String      @id @default(uuid())
-  name      String      @unique
-  startDate DateTime
-  endDate   DateTime?
-  users     TripUser[] // Teilnehmer des Trips
-  expenses  Expense[] // Ausgaben des Trips
-  shares    TripShare[] // Aufteilung der Trip-Gesamtkosten
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id                 String              @id @default(uuid())
+  name               String              @unique
+  startDate          DateTime
+  endDate            DateTime?
+  users              TripUser[] // Teilnehmer des Trips
+  expenses           Expense[] // Ausgaben des Trips
+  shares             TripShare[] // Aufteilung der Trip-Gesamtkosten
+  settlementPayments SettlementPayment[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 model TripUser {
@@ -101,4 +104,21 @@ model Currency {
   factor      Float
   enabled     Boolean   @default(true)
   expenses    Expense[] // Gegen-Relation zur Expense.currencyRef
+}
+
+model SettlementPayment {
+  id          String   @id @default(uuid())
+  amount      Float
+  amountCents Int
+  date        DateTime
+  trip        Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId      String
+  fromUser    User     @relation("SettlementPaymentFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  fromUserId  String
+  toUser      User     @relation("SettlementPaymentToUser", fields: [toUserId], references: [id], onDelete: Cascade)
+  toUserId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tripId, date])
 }

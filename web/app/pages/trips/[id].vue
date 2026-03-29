@@ -16,7 +16,13 @@ import {
   type EstimationSettings,
 } from "~/utils/expense-estimation";
 import { getExpenseDisplayAmount } from "~/utils/expense-reference";
-import { calculateTripSettlement } from "~/utils/trip-settlement";
+import {
+  calculateTripSettlement,
+  getConfirmedSettlementPaymentActionKey,
+  getSuggestedSettlementPaymentKey,
+  type ConfirmedSettlementPayment,
+  type SettlementPayment,
+} from "~/utils/trip-settlement";
 import { calculateTripStats } from "~/utils/trip-stats";
 
 type Trip = {
@@ -73,6 +79,11 @@ type Currency = {
   enabled: boolean;
 };
 
+type SettlementPaymentRecord = ConfirmedSettlementPayment & {
+  fromUser: { id: string; name: string };
+  toUser: { id: string; name: string };
+};
+
 const route = useRoute();
 const api = useApi();
 const auth = useAuth();
@@ -85,11 +96,13 @@ const loading = ref(true);
 const saving = ref(false);
 const deleting = ref(false);
 const estimationSaving = ref(false);
+const settlementPaymentBusyKey = ref<string | null>(null);
 const errorMessage = ref("");
 const formErrorMessage = ref("");
 const trip = ref<Trip | null>(null);
 const participants = ref<TripUser[]>([]);
 const expenses = ref<Expense[]>([]);
+const confirmedSettlementPayments = ref<SettlementPaymentRecord[]>([]);
 const categories = ref<Category[]>([]);
 const currencies = ref<Currency[]>([]);
 const editorOpen = ref(false);
@@ -126,17 +139,19 @@ async function loadTrip() {
 
   try {
     const tripId = String(route.params.id);
-    const [tripsData, expensesData, participantsData, categoriesData, currenciesData] = await Promise.all([
+    const [tripsData, expensesData, participantsData, categoriesData, currenciesData, settlementPaymentsData] = await Promise.all([
       api.get<Trip[]>("/trips"),
       api.post<Expense[], { id: string }>("/tripexpenses", { id: tripId }),
       api.post<TripUser[], { id: string }>("/tripusers", { id: tripId }),
       api.get<Category[]>("/categories"),
       api.get<Currency[]>("/currency"),
+      api.post<SettlementPaymentRecord[], { id: string }>("/tripsettlements", { id: tripId }),
     ]);
 
     trip.value = tripsData.find((entry) => entry.id === tripId) || null;
     participants.value = participantsData;
     expenses.value = expensesData;
+    confirmedSettlementPayments.value = sortSettlementPayments(settlementPaymentsData);
     categories.value = categoriesData;
     currencies.value = [...currenciesData].sort((left, right) => left.name.localeCompare(right.name));
 
@@ -227,6 +242,17 @@ function openEditDialog(expense: Expense) {
   form.userId = expense.user?.id || auth.user.value?.id || "";
   formErrorMessage.value = "";
   editorOpen.value = true;
+}
+
+function sortSettlementPayments(payments: SettlementPaymentRecord[]) {
+  return [...payments].sort((left, right) => {
+    const dateDifference = new Date(right.date).getTime() - new Date(left.date).getTime();
+    if (dateDifference !== 0) {
+      return dateDifference;
+    }
+
+    return new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime();
+  });
 }
 
 function canManageExpense(expense: Expense) {
@@ -411,13 +437,75 @@ const availableCurrencies = computed(() => {
 });
 
 const stats = computed(() => calculateTripStats(displayExpenses.value, trip.value?.startDate));
-const settlement = computed(() => calculateTripSettlement(participants.value, displayExpenses.value));
+const settlement = computed(() =>
+  calculateTripSettlement(participants.value, displayExpenses.value, confirmedSettlementPayments.value),
+);
 const totalAmount = computed(() => stats.value.totalAmount.toFixed(2));
 const estimatedTripTotal = computed(() =>
   estimateTripTotal(displayExpenses.value, estimationSettingsState.settings.value).toFixed(2),
 );
 const hasForeignCurrencyExpenses = computed(() => sortedExpenses.value.some((expense) => expense.currency !== "EUR"));
 const canEstimateForeignCurrency = computed(() => currencies.value.some((currency) => currency.name !== "EUR"));
+
+async function confirmSettlementPayment(payment: SettlementPayment) {
+  if (!trip.value) {
+    return;
+  }
+
+  settlementPaymentBusyKey.value = getSuggestedSettlementPaymentKey(payment);
+  errorMessage.value = "";
+
+  try {
+    const created = await api.post<SettlementPaymentRecord, Record<string, unknown>>("/tripsettlements", {
+      tripId: trip.value.id,
+      fromUserId: payment.fromUserId,
+      toUserId: payment.toUserId,
+      amount: payment.amount,
+      date: new Date().toISOString(),
+    });
+    confirmedSettlementPayments.value = sortSettlementPayments([...confirmedSettlementPayments.value, created]);
+  } catch (error: any) {
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to confirm settlement payment";
+  } finally {
+    settlementPaymentBusyKey.value = null;
+  }
+}
+
+async function updateSettlementPayment(payment: { id: string; fromUserId: string; toUserId: string; amount: number; date: string }) {
+  settlementPaymentBusyKey.value = getConfirmedSettlementPaymentActionKey(payment.id, "edit");
+  errorMessage.value = "";
+
+  try {
+    const updated = await api.put<SettlementPaymentRecord, Record<string, unknown>>("/tripsettlements", {
+      id: payment.id,
+      fromUserId: payment.fromUserId,
+      toUserId: payment.toUserId,
+      amount: payment.amount,
+      date: new Date(`${payment.date}T12:00:00.000Z`).toISOString(),
+    });
+    confirmedSettlementPayments.value = sortSettlementPayments(
+      confirmedSettlementPayments.value.map((entry) => (entry.id === payment.id ? updated : entry)),
+    );
+  } catch (error: any) {
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to update settlement payment";
+  } finally {
+    settlementPaymentBusyKey.value = null;
+  }
+}
+
+async function cancelSettlementPayment(paymentId: string) {
+  settlementPaymentBusyKey.value = getConfirmedSettlementPaymentActionKey(paymentId, "cancel");
+  errorMessage.value = "";
+
+  try {
+    await api.delete("/tripsettlements", { id: paymentId });
+    confirmedSettlementPayments.value = confirmedSettlementPayments.value.filter((entry) => entry.id !== paymentId);
+  } catch (error: any) {
+    errorMessage.value = error?.data?.statusMessage || error?.statusMessage || "Failed to cancel settlement payment";
+  } finally {
+    settlementPaymentBusyKey.value = null;
+  }
+}
 
 onMounted(loadTrip);
 </script>
@@ -743,7 +831,13 @@ onMounted(loadTrip);
     :total-amount="settlement.totalAmount"
     :factor-total="settlement.factorTotal"
     :members="settlement.members"
+    :participants="participants"
     :payments="settlement.payments"
+    :confirmed-payments="confirmedSettlementPayments"
+    :busy-payment-key="settlementPaymentBusyKey"
+    @confirm-payment="confirmSettlementPayment"
+    @update-payment="updateSettlementPayment"
+    @cancel-payment="cancelSettlementPayment"
   />
 
   <EstimationSettingsDialog

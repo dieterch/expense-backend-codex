@@ -36,6 +36,15 @@ export type SettlementPayment = {
   amount: number;
 };
 
+export type ConfirmedSettlementPayment = SettlementPayment & {
+  id: string;
+  tripId: string;
+  amountCents?: number | null;
+  date: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
 export type TripSettlement = {
   totalAmount: number;
   factorTotal: number;
@@ -51,9 +60,22 @@ function centsToAmount(amountCents: number) {
   return amountCents / 100;
 }
 
+function getConfirmedPaymentAmountCents(payment: ConfirmedSettlementPayment) {
+  return typeof payment.amountCents === "number" ? payment.amountCents : amountToCents(payment.amount);
+}
+
+export function getSuggestedSettlementPaymentKey(payment: SettlementPayment) {
+  return `${payment.fromUserId}:${payment.toUserId}:${amountToCents(payment.amount)}`;
+}
+
+export function getConfirmedSettlementPaymentActionKey(paymentId: string, action: "edit" | "cancel") {
+  return `${action}:${paymentId}`;
+}
+
 export function calculateTripSettlement(
   participants: ParticipantLike[],
   expenses: ExpenseLike[],
+  confirmedPayments: ConfirmedSettlementPayment[] = [],
 ): TripSettlement {
   const members = participants.map((participant) => ({
     userId: participant.user.id,
@@ -109,12 +131,20 @@ export function calculateTripSettlement(
     });
 
   const shareByUser = new Map(flooredShares.map((entry) => [entry.userId, entry.shareCents]));
+  const settlementAdjustmentByUser = new Map<string, number>();
+
+  for (const payment of confirmedPayments) {
+    const amountCents = getConfirmedPaymentAmountCents(payment);
+    settlementAdjustmentByUser.set(payment.fromUserId, (settlementAdjustmentByUser.get(payment.fromUserId) || 0) + amountCents);
+    settlementAdjustmentByUser.set(payment.toUserId, (settlementAdjustmentByUser.get(payment.toUserId) || 0) - amountCents);
+  }
 
   const settlementMembers = members
     .map((member) => {
       const paidCents = paidByUser.get(member.userId) || 0;
       const shareCents = shareByUser.get(member.userId) || 0;
-      const balanceCents = paidCents - shareCents;
+      const settlementAdjustmentCents = settlementAdjustmentByUser.get(member.userId) || 0;
+      const balanceCents = paidCents - shareCents + settlementAdjustmentCents;
 
       return {
         userId: member.userId,
