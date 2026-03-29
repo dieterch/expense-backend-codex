@@ -11,8 +11,9 @@ services:
     ports:
       - "5678:5678"
     volumes:
-      - ./data:/app/data
-      - ./data:/app/prisma
+      - expense_data:/app/data
+      - ./data/schema.prisma:/app/prisma/schema.prisma:ro
+      - ./data/migrations:/app/prisma/migrations:ro
     restart: unless-stopped
     networks:
       - traefik_network
@@ -53,3 +54,6 @@ services:
 networks:
   traefik_network:
     external: true
+
+volumes:
+  expense_data:
