@@ -1,29 +1,55 @@
 services:
   backend:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       target: backend
     env_file:
-      - ../.env
+      - ./expense-backend-codex/.env
     environment:
       DATABASE_URL: file:/app/data/dev.db
     ports:
       - "5678:5678"
     volumes:
-      - expense_data:/app/data
+      - ./data:/app/data
+      - ./data:/app/prisma
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.router-expense-codex-api.rule=Host(`${TRAEFIK_BACKEND_HOST:-api-expensecodex.home.smallfamilybusiness.net}`)"
+      - "traefik.http.routers.router-expense-codex-api.entrypoints=${TRAEFIK_ENTRYPOINT:-https}"
+      - "traefik.http.routers.router-expense-codex-api.tls=true"
+      - "traefik.http.routers.router-expense-codex-api.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.router-expense-codex-api.service=service-expense-codex-api"
+      - "traefik.http.services.service-expense-codex-api.loadbalancer.server.port=5678"
+      - "traefik.http.routers.router-expense-codex-api.middlewares=${TRAEFIK_BACKEND_MIDDLEWARES:-authelia@docker}"
 
   frontend:
     build:
-      context: ..
-      dockerfile: docker/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       target: frontend
     environment:
-      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://127.0.0.1:5678/api/v1}
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-https://api-expensecodex.home.smallfamilybusiness.net/api/v1}
     ports:
       - "3000:3000"
     depends_on:
       - backend
+    restart: unless-stopped
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.router-expense-codex.rule=Host(`${TRAEFIK_FRONTEND_HOST:-expensecodex.home.smallfamilybusiness.net}`)"
+      - "traefik.http.routers.router-expense-codex.entrypoints=${TRAEFIK_ENTRYPOINT:-https}"
+      - "traefik.http.routers.router-expense-codex.tls=true"
+      - "traefik.http.routers.router-expense-codex.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.routers.router-expense-codex.service=service-expense-codex"
+      - "traefik.http.services.service-expense-codex.loadbalancer.server.port=3000"
+      - "traefik.http.routers.router-expense-codex.middlewares=${TRAEFIK_FRONTEND_MIDDLEWARES:-authelia@docker}"
 
-volumes:
-  expense_data:
+networks:
+  traefik_network:
+    external: true

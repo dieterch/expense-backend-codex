@@ -5,15 +5,15 @@ WORKDIR /app
 # Native modules used in this repo need a minimal build toolchain on Alpine.
 RUN apk add --no-cache libc6-compat openssl python3 make g++
 
-COPY package*.json ./
-COPY web/package*.json ./web/
+COPY expense-backend-codex/package*.json ./
+COPY expense-backend-codex/web/package*.json ./web/
 
 RUN npm ci
 RUN npm --prefix web ci
 
 FROM deps AS build
 
-COPY . .
+COPY expense-backend-codex/. .
 
 RUN npx prisma generate
 RUN npm run build
@@ -35,7 +35,7 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.output ./.output
 COPY --from=build /app/prisma ./prisma
 
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data /app/prisma
 
 EXPOSE 5678
 
