@@ -14,6 +14,8 @@ Start by reading:
 - `web/estimation-calibration.md`
 - `package.json`
 - `web/package.json`
+- `docker/Dockerfile`
+- `docker/compose.yaml`
 
 Then inspect:
 - `git status --short`
@@ -28,6 +30,8 @@ Backend:
   - normal users only see their own trips and related expenses
   - admins can see/manage all trips and admin resources
 - `/api/v1/*` routes exist and should be preferred.
+- the versioned settlement route exists:
+  - `/api/v1/tripsettlements`
 - money normalization is in place:
   - `Expense.amount`
   - `Expense.amountCents`
@@ -43,6 +47,12 @@ Backend:
   - `/openapi.yaml`
   - they are only available when `NITRO_DOCS_ENABLED=true`
   - default/off behavior is `404`
+- Docker deployment scaffolding is implemented:
+  - multi-stage Docker build based on `node:22-alpine`
+  - separate `backend` and `frontend` targets
+  - Compose file lives in `docker/compose.yaml`
+  - backend runs Prisma migrations on container start
+  - SQLite is stored in a named Docker volume at `/app/data/dev.db`
 
 Frontend:
 - Nuxt + Vuetify app in `web/`
@@ -130,6 +140,9 @@ Frontend:
 - frontend startup redirect/session restore has been stabilized:
   - root `/` now redirects via dedicated route middleware
   - session restore no longer uses the auto-redirecting API helper during bootstrap
+- frontend Docker/runtime API base is configurable through:
+  - `NUXT_PUBLIC_API_BASE`
+  - `.env.example` now includes a default local value of `http://127.0.0.1:5678/api/v1`
 
 Calibration outcome now in code:
 - default markup: `75` bps (`0.75%`)
@@ -138,10 +151,14 @@ Calibration outcome now in code:
 - source: `web/estimation-calibration.md`
 
 Important files for current state:
+- `docker/Dockerfile`
+- `docker/compose.yaml`
+- `.dockerignore`
 - `server/api/expenses.ts`
 - `server/api/trips.ts`
 - `server/api/tripexpenses.ts`
 - `server/api/tripsettlements.ts`
+- `server/api/v1/tripsettlements.ts`
 - `server/middleware/auth.global.ts`
 - `utils/money.ts`
 - `utils/reference-exchange.ts`
@@ -196,6 +213,8 @@ Important workflow note:
 - parallel runs can collide on Nuxt generated artifacts and produce false failures
 
 Recent meaningful commits:
+- `ba42860` Add Docker deployment setup
+- `fcb3f7d` Add versioned trip settlements route
 - `7b0c78b` Persist confirmed trip settlement payments
 - `be60d8d` Stabilize trip header participant and action rows
 - `7817a24` Add more UI themes and filter estimation currencies
@@ -216,9 +235,12 @@ Local/dev notes:
   - `npm run db:seed:dev`
   - admin login: `dev-admin@example.com` / `dev-admin-password`
   - member login: `dev-member@example.com` / `dev-member-password`
+- `.env` currently also contains:
+  - `NUXT_PUBLIC_API_BASE=http://127.0.0.1:5678/api/v1`
 - `ausgaben.xlsx` exists locally in the repo root and is intentionally gitignored.
 - docs/UI API docs are disabled unless `.env` contains:
   - `NITRO_DOCS_ENABLED=true`
+- if a local database throws Prisma `P2021` for `SettlementPayment`, verify that migration `20260329115556_add_settlement_payments` has been applied to the active SQLite DB
 - if frontend behavior looks stale or blank while using VS Code localhost forwarding, restart both frontend/backend dev servers and hard refresh the browser once before debugging further
 - for LAN testing on devices like iPad:
   - frontend should be opened via your machine's LAN IP, not `localhost`
@@ -235,6 +257,7 @@ Important working conventions:
 - Use `apply_patch` for file edits.
 - Prefer concise progress updates while working.
 - Run verification after changes when feasible.
+- Do not commit local `.env` edits.
 
 Current planning source of truth:
 
