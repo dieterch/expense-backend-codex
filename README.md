@@ -88,26 +88,41 @@ You can override the defaults with env vars such as:
 
 Container files live in [docker/](/home/developer/projects/expense-backend-codex/docker).
 
-The provided Compose setup starts:
+The repository now includes server-root deployment templates intended to be copied from [docker/compose.yaml](/home/developer/projects/expense-backend-codex/docker/compose.yaml) and [docker/Dockerfile](/home/developer/projects/expense-backend-codex/docker/Dockerfile) into a separate deployment directory that contains:
+
+- `compose.yaml`
+- `Dockerfile`
+- `data/`
+- `expense-backend-codex/`
+
+In that deployment directory, the provided Compose setup starts:
 
 - backend on `5678`
 - frontend on `3000`
 
-It expects `NUXT_PUBLIC_API_BASE` in [.env](/home/developer/projects/expense-backend-codex/.env). For local browser access, use:
+It expects `./expense-backend-codex/.env`. For local browser access, use:
 
 ```dotenv
 NUXT_PUBLIC_API_BASE=http://127.0.0.1:5678/api/v1
 ```
 
-To build and run:
+To build and run from the deployment root:
 
 ```bash
-docker compose -f docker/compose.yaml up --build
+docker compose build
+docker compose up -d
 ```
 
 The backend stores SQLite data in the named Docker volume `expense_data` at `/app/data/dev.db`.
 
-For reverse proxies such as Traefik, keep the app containers on plain HTTP and add your own labels to [`docker/compose.yaml`](/home/developer/projects/expense-backend-codex/docker/compose.yaml). When the frontend is served behind a public hostname, set `NUXT_PUBLIC_API_BASE` to the public backend URL, for example `https://api.example.com/api/v1`.
+The deployment root `data/` directory is reserved for Prisma runtime metadata used by `npx prisma migrate deploy`:
+
+- `data/schema.prisma`
+- `data/migrations/`
+
+The provided Compose file binds those files into `/app/prisma` and keeps the actual SQLite database out of `./data`.
+
+The Compose template already includes Traefik labels for frontend and backend on an external `traefik_network`. Authelia middleware labels are included as commented examples and should use `authelia@file` in this environment when re-enabled. When the frontend is served behind a public hostname, set `NUXT_PUBLIC_API_BASE` to the public backend URL, for example `https://api.example.com/api/v1`.
 
 ## SQLite safety
 

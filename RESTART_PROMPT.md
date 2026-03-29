@@ -50,9 +50,24 @@ Backend:
 - Docker deployment scaffolding is implemented:
   - multi-stage Docker build based on `node:22-alpine`
   - separate `backend` and `frontend` targets
-  - Compose file lives in `docker/compose.yaml`
+  - root-deployment templates live in `docker/Dockerfile` and `docker/compose.yaml`
+  - those templates are designed to be copied into a separate server root that contains:
+    - `compose.yaml`
+    - `Dockerfile`
+    - `data/`
+    - `expense-backend-codex/`
   - backend runs Prisma migrations on container start
   - SQLite is stored in a named Docker volume at `/app/data/dev.db`
+  - Prisma runtime files for `npx prisma migrate deploy` are bind-mounted from deployment-root `data/`:
+    - `data/schema.prisma`
+    - `data/migrations/`
+  - `data/` no longer stores the SQLite database
+  - Traefik labels for frontend and backend are present in `docker/compose.yaml`
+  - the external Docker network is:
+    - `traefik_network`
+  - Authelia labels are intentionally commented out for first-run safety
+  - when re-enabled in this environment, the middleware name is:
+    - `authelia@file`
 
 Frontend:
 - Nuxt + Vuetify app in `web/`
@@ -213,6 +228,8 @@ Important workflow note:
 - parallel runs can collide on Nuxt generated artifacts and produce false failures
 
 Recent meaningful commits:
+- `11c8839` Separate Prisma mounts from SQLite data volume
+- `a5cc804` Adjust Docker deployment for server root layout
 - `ba42860` Add Docker deployment setup
 - `fcb3f7d` Add versioned trip settlements route
 - `7b0c78b` Persist confirmed trip settlement payments
@@ -242,6 +259,14 @@ Local/dev notes:
   - `NITRO_DOCS_ENABLED=true`
 - if a local database throws Prisma `P2021` for `SettlementPayment`, verify that migration `20260329115556_add_settlement_payments` has been applied to the active SQLite DB
 - if frontend behavior looks stale or blank while using VS Code localhost forwarding, restart both frontend/backend dev servers and hard refresh the browser once before debugging further
+- Docker deployment was verified on a separate server-root layout after copying the templates from `docker/`
+- the tested deployment flow is:
+  - `docker compose build`
+  - `docker compose up -d`
+- if Docker deployment is revisited, remember:
+  - SQLite belongs in Docker volume `expense_data`
+  - deployment-root `data/` only contains Prisma files needed by `npx prisma migrate deploy`
+  - Authelia middleware references should use `authelia@file`, not `authelia@docker`
 - for LAN testing on devices like iPad:
   - frontend should be opened via your machine's LAN IP, not `localhost`
   - backend also needs to be running on `0.0.0.0:5678`
