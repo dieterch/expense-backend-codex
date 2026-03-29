@@ -50,7 +50,7 @@ const isValid = computed(() =>
         Tune a simple markup-plus-fee model for foreign-currency expenses. These settings stay in your browser for now.
       </p>
       <v-alert type="info" variant="tonal" class="mb-4">
-        Current defaults are calibrated from the local `ausgaben.xlsx` workbook and should be treated as a GBP-first baseline.
+        Currency overrides are only shown for currencies currently enabled in admin settings.
       </v-alert>
 
       <v-form @submit.prevent="emit('submit')">

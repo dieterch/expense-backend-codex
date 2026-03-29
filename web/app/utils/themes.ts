@@ -67,6 +67,71 @@ export const APP_THEMES = {
       error: "#b5483e",
     },
   },
+  ember: {
+    label: "Ember",
+    dark: true,
+    colors: {
+      primary: "#c95a3d",
+      secondary: "#f0a35b",
+      accent: "#f7d37a",
+      surface: "#2c1e1a",
+      background: "#1a1210",
+      success: "#7bc47f",
+      error: "#ff8b7b",
+    },
+  },
+  fjord: {
+    label: "Fjord",
+    dark: false,
+    colors: {
+      primary: "#1d4a57",
+      secondary: "#5f8791",
+      accent: "#d6b46d",
+      surface: "#f5fbfc",
+      background: "#dce9eb",
+      success: "#3d7d72",
+      error: "#bc5b4f",
+    },
+  },
+  terracotta: {
+    label: "Terracotta",
+    dark: false,
+    colors: {
+      primary: "#8e4b3e",
+      secondary: "#cf7c54",
+      accent: "#e8b86b",
+      surface: "#fff8f2",
+      background: "#f1dfd2",
+      success: "#5c8550",
+      error: "#bf4d3f",
+    },
+  },
+  alpine: {
+    label: "Alpine",
+    dark: false,
+    colors: {
+      primary: "#1f4f45",
+      secondary: "#6d8f78",
+      accent: "#cdb76d",
+      surface: "#f6fbf8",
+      background: "#dde9e1",
+      success: "#3f7d55",
+      error: "#b6574a",
+    },
+  },
+  noir: {
+    label: "Noir",
+    dark: true,
+    colors: {
+      primary: "#d8c4a7",
+      secondary: "#8aa0b3",
+      accent: "#cfa86a",
+      surface: "#1a1c20",
+      background: "#101216",
+      success: "#7ec08e",
+      error: "#ef8b82",
+    },
+  },
 } as const;
 
 export type ThemeName = keyof typeof APP_THEMES;

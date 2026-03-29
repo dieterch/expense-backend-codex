@@ -192,7 +192,12 @@ function openCreateDialog() {
 function populateEstimationForm() {
   const settings = estimationSettingsState.settings.value;
   const foreignCurrencies = Array.from(
-    new Set(currencies.value.map((entry) => entry.name).filter((currency) => currency !== "EUR")),
+    new Set(
+      currencies.value
+        .filter((entry) => entry.enabled)
+        .map((entry) => entry.name)
+        .filter((currency) => currency !== "EUR"),
+    ),
   );
 
   estimationForm.globalMarkupPercent = settings.defaultMarkupBps / 100;
