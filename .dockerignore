@@ -1,0 +1,11 @@
+.git
+.gitignore
+.nitro
+.output
+.tmp-tests
+backups
+node_modules
+web/node_modules
+web/.nuxt
+prisma/dev.db
+ausgaben.xlsx
