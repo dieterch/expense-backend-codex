@@ -5,6 +5,8 @@ Use this prompt to start a fresh Codex session on this repo with the right conte
 ```text
 You are continuing work in `/home/developer/projects/expense-backend-codex`.
 
+Read `RESTART_PROMPT.md` first, then continue with the files below.
+
 Start by reading:
 
 - `README.md`
@@ -68,6 +70,10 @@ Frontend:
   - each user has a `settlementFactor`
   - trip settlement computes weighted target share per participant
   - settlement dialog proposes balancing payments between debtors and creditors
+  - confirmed settlement payments are persisted per trip
+  - confirmed payments are listed with date, payer, recipient, and amount
+  - confirmed payments can be edited or cancelled
+  - later settlement suggestions subtract already confirmed payments
 - FX support is implemented in trip UI:
   - foreign-currency expenses show reference EUR conversion
   - when historical reference FX is missing, the UI falls back to the configured manual exchange rate
@@ -87,6 +93,7 @@ Frontend:
   - weekend surcharge field
   - per-currency override support
   - estimated EUR total shown beside reference EUR
+  - estimation settings dialog only shows override fields for currencies currently enabled in admin currency settings
 - currency administration/import is expanded:
   - admin currencies page can import from Frankfurter
   - import stores `displayName`, `symbol`, and derived `factor` from Frankfurter EUR rates
@@ -102,18 +109,24 @@ Frontend:
 - estimator calibration from `ausgaben.xlsx` is implemented and documented
 - category icons are rendered in trip/admin views
 - MDI font icons are loaded and legacy icon names are normalized for display
-- five selectable frontend themes are implemented and persisted:
+- ten selectable frontend themes are implemented and persisted:
   - Atlas
   - Tide
   - Grove
   - Dusk
   - Paper
+  - Ember
+  - Fjord
+  - Terracotta
+  - Alpine
+  - Noir
 - responsive/mobile improvements are implemented:
   - mobile shell navigation drawer
   - responsive expense/report card layouts beside table layouts
   - tablet/iPad app bar now uses the drawer-based shell to avoid wrapped/clipped controls
   - wide-screen container sizing was fixed to avoid asymmetric left/right margins and clipped content
   - login form width was increased on larger screens
+  - trip detail header now keeps participants on their own row and settlement/statistics/estimation buttons on a separate row underneath to avoid uncontrolled wrapping
 - frontend startup redirect/session restore has been stabilized:
   - root `/` now redirects via dedicated route middleware
   - session restore no longer uses the auto-redirecting API helper during bootstrap
@@ -128,12 +141,14 @@ Important files for current state:
 - `server/api/expenses.ts`
 - `server/api/trips.ts`
 - `server/api/tripexpenses.ts`
+- `server/api/tripsettlements.ts`
 - `server/middleware/auth.global.ts`
 - `utils/money.ts`
 - `utils/reference-exchange.ts`
 - `utils/runtime-flags.ts`
 - `prisma/schema.prisma`
 - `prisma/migrations/20260327153000_add_expense_reference_exchange/migration.sql`
+- `prisma/migrations/20260329115556_add_settlement_payments/migration.sql`
 - `server/routes/docs.ts`
 - `server/routes/openapi.yaml.ts`
 - `web/.nuxtrc`
@@ -168,6 +183,7 @@ Important files for current state:
 - `web/app/utils/trip-settlement.ts`
 - `web/app/utils/themes.ts`
 - `web/estimation-calibration.md`
+- `tests/trip-settlement.test.ts`
 
 Testing status:
 - `npm run test` passes
@@ -180,6 +196,9 @@ Important workflow note:
 - parallel runs can collide on Nuxt generated artifacts and produce false failures
 
 Recent meaningful commits:
+- `7b0c78b` Persist confirmed trip settlement payments
+- `be60d8d` Stabilize trip header participant and action rows
+- `7817a24` Add more UI themes and filter estimation currencies
 - `c6d94d2` Improve geolocation error hints in expense dialog
 - `015281c` Backfill enabled currencies from expense usage
 - `c64e888` Add selectable currencies for trip expense dialogs
@@ -228,6 +247,7 @@ Status:
   - configurable bank-cost estimation is implemented
   - manual FX fallback is implemented in the UI when historical reference data is missing
   - weighted settlement is implemented in the trip UI
+  - confirmed settlement payment persistence and multi-round settlement tracking are implemented
   - actual booked EUR reconciliation/prediction-error follow-up is still an open next frontier
 - repo should be clean before starting new work
 
