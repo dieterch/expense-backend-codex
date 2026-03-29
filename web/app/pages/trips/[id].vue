@@ -471,7 +471,7 @@ onMounted(loadTrip);
                 </v-sheet>
               </div>
 
-              <div class="d-flex flex-wrap ga-2 align-center">
+              <div class="trip-participant-row mb-4">
                 <v-chip
                   v-for="participant in participants"
                   :key="participant.user.id"
@@ -479,11 +479,14 @@ onMounted(loadTrip);
                 >
                   {{ participant.user.name }}
                 </v-chip>
+              </div>
+
+              <div class="trip-action-row">
                 <v-btn
                   variant="tonal"
                   color="secondary"
                   prepend-icon="mdi-chart-donut"
-                  class="ml-auto trip-action-inline"
+                  class="trip-action-button"
                   @click="statsOpen = true"
                 >
                   Statistics
@@ -492,7 +495,7 @@ onMounted(loadTrip);
                   variant="tonal"
                   color="secondary"
                   prepend-icon="mdi-scale-balance"
-                  class="trip-action-inline"
+                  class="trip-action-button"
                   @click="settlementOpen = true"
                 >
                   Settlement
@@ -502,7 +505,7 @@ onMounted(loadTrip);
                   variant="tonal"
                   color="secondary"
                   prepend-icon="mdi-tune-vertical"
-                  class="trip-action-inline"
+                  class="trip-action-button"
                   @click="openEstimationSettingsDialog"
                 >
                   Estimation
@@ -796,7 +799,28 @@ onMounted(loadTrip);
   margin-top: 1rem;
 }
 
-.trip-action-inline {
+.trip-participant-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.trip-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.trip-action-button {
   white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .trip-action-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 </style>
