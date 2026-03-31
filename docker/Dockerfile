@@ -33,6 +33,7 @@ ENV DATABASE_URL=file:/app/data/dev.db
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/.output ./.output
+COPY --from=build /app/openapi.yaml ./openapi.yaml
 COPY --from=build /app/prisma ./prisma
 
 RUN mkdir -p /app/data /app/prisma
